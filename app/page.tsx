@@ -13,8 +13,16 @@ declare global {
   }
 }
 
+const ALLOWLIST = [
+  "0x00000000219ab540356cbb839cbe05303d7705fa",
+  "0x00000000219ab540356cbb839cbe05303d770sfa",
+  "0x00000000219ab540356cbb839cbe05303d7705aa",
+  "0x00000000219ab540356cbb839cbe05303d770578",
+  "0x00000000219ab540356cbb839cbe05303d7705f1",
+]
+
 export default function HomePage() {
-  const [totalClaimed, setTotalClaimed] = useState(1247)
+  const [totalClaimed, setTotalClaimed] = useState(0) // Initialize to 0 instead of hardcoded 1247
   const [walletAddress, setWalletAddress] = useState("")
   const [checkResult, setCheckResult] = useState<"eligible" | "ineligible" | null>(null)
   const [isChecking, setIsChecking] = useState(false)
@@ -24,12 +32,39 @@ export default function HomePage() {
   const [connectedAddress, setConnectedAddress] = useState("")
   const [isConnecting, setIsConnecting] = useState(false)
 
-  // Simulate initial stat fetch
   useEffect(() => {
-    setTotalClaimed(1247)
-    // Check if wallet is already connected
+    fetchTotalClaims()
     checkWalletConnection()
   }, [])
+
+  const fetchTotalClaims = async () => {
+    try {
+      if (typeof window !== "undefined" && window.ethereum) {
+        // Call totalClaims() function on the smart contract
+        const result = await window.ethereum.request({
+          method: "eth_call",
+          params: [
+            {
+              to: "0x1234567890123456789012345678901234567890", // Replace with your actual contract address
+              data: "0x4b0e7216", // Function selector for totalClaims()
+            },
+            "latest",
+          ],
+        })
+
+        // Convert hex result to decimal
+        const claimsCount = Number.parseInt(result, 16)
+        setTotalClaimed(claimsCount)
+      } else {
+        // Fallback for demo purposes
+        setTotalClaimed(1247)
+      }
+    } catch (error) {
+      console.error("Error fetching total claims:", error)
+      // Fallback to demo value
+      setTotalClaimed(1247)
+    }
+  }
 
   const checkWalletConnection = async () => {
     if (typeof window !== "undefined" && window.ethereum) {
@@ -122,8 +157,9 @@ export default function HomePage() {
     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    // Mock eligibility check based on wallet address
-    const isEligible = walletAddress.toLowerCase().includes("e") || Math.random() > 0.4
+    // Check if address is in the allowlist
+    const normalizedAddress = walletAddress.toLowerCase().trim()
+    const isEligible = ALLOWLIST.some((addr) => addr.toLowerCase() === normalizedAddress)
     setCheckResult(isEligible ? "eligible" : "ineligible")
 
     setIsChecking(false)
@@ -234,7 +270,7 @@ export default function HomePage() {
           >
             <div className="text-center">
               <div className="text-lg font-semibold mb-2">
-                {checkResult === "eligible" ? "🎉 Eligible!" : "❌ Not Eligible"}
+                {checkResult === "eligible" ? "✅ Eligible" : "❌ Not Eligible"}
               </div>
               <div className="text-sm">
                 {checkResult === "eligible"
