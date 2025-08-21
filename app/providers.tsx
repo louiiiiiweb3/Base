@@ -7,7 +7,6 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { getDefaultConfig } from "@rainbow-me/rainbowkit"
 import { base } from "wagmi/chains"
-import "@rainbow-me/rainbowkit/styles.css"
 
 const config = getDefaultConfig({
   appName: "People on Base",
