@@ -58,6 +58,7 @@ export default function AirdropPage({
   }>({ step: "idle", message: "" })
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [showSocialModal, setShowSocialModal] = useState(false)
 
   useEffect(() => {
     fetchTotalClaims()
@@ -140,6 +141,15 @@ export default function AirdropPage({
   }
 
   const checkAirdrop = async () => {
+    const addressToCheck = walletAddress.trim() || connectedAddress
+    if (!addressToCheck) return
+
+    setShowSocialModal(true)
+  }
+
+  const proceedWithAirdropCheck = async () => {
+    setShowSocialModal(false)
+
     const addressToCheck = walletAddress.trim() || connectedAddress
     if (!addressToCheck) return
 
@@ -298,9 +308,7 @@ export default function AirdropPage({
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Animated network background with floating elements */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-        {/* Dotted pattern overlay */}
         <div className="absolute inset-0 opacity-30">
           <div
             className="absolute inset-0"
@@ -312,40 +320,34 @@ export default function AirdropPage({
           ></div>
         </div>
 
-        {/* Floating network elements */}
         <div className="absolute inset-0">
-          {/* Bitcoin - top left */}
           <div className="absolute top-20 left-16 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center animate-float shadow-lg shadow-orange-500/30">
             <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M23.638 14.904c-1.602 6.43-8.113 10.34-14.542 8.736C2.67 22.05-1.244 15.525.362 9.105 1.962 2.67 8.475-1.243 14.9.358c6.43 1.605 10.342 8.115 8.738 14.546z" />
               <path d="M17.415 11.037c.218-1.454-.89-2.236-2.403-2.758l.491-1.968-1.198-.299-.478 1.915c-.315-.078-.638-.152-.958-.225l.482-1.932-1.198-.299-.491 1.968c-.261-.059-.517-.117-.766-.178l.001-.006-1.652-.412-.318 1.276s.89.204.871.217c.486.121.574.442.559.697l-.56 2.246c.034.009.077.022.125.042l-.126-.031-.784 3.144c-.059.146-.209.365-.547.282.012.017-.871-.217-.871-.217L8.53 16.53l1.563.39c.291.073.576.149.856.221l-.496 1.991 1.198.299.491-1.968c.328.089.646.171.958.247l-.49 1.956 1.198.299.496-1.988c2.046.387 3.584.231 4.23-1.617.522-1.49-.026-2.35-1.103-2.91.785-.181 1.375-.695 1.534-1.756z" />
-              <path d="M15.934 14.269c-.371 1.489-2.877.684-3.689.482l.658-2.639c.812.203 3.427.605 2.502 1.893z" />
+              <path d="M15.934 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM16.305 11.013c-.338 1.354-2.423.667-3.098.498l.596-2.391c.675.169 2.849.484 2.502 1.893z" />
               <path d="M16.305 11.013c-.338 1.354-2.423.667-3.098.498l.596-2.391c.675.169 2.849.484 2.502 1.893z" />
             </svg>
           </div>
 
-          {/* Ethereum - top right */}
           <div className="absolute top-32 right-20 w-14 h-14 bg-blue-600 rounded-lg flex items-center justify-center animate-float-delayed shadow-lg shadow-blue-600/30">
             <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l-3.693-3.6832L5.6 4.9045l6.4 6.4 6.4-6.4-2.707-2.7155z" />
             </svg>
           </div>
 
-          {/* Linea - middle left */}
           <div className="absolute top-1/2 left-12 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse shadow-lg shadow-emerald-500/30">
             <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M2 6h20v2H2V6zm0 5h20v2H2v-2zm0 5h20v2H2v-2z" />
             </svg>
           </div>
 
-          {/* Binance Coin - bottom right */}
           <div className="absolute bottom-32 right-16 w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center animate-bounce-slow shadow-lg shadow-yellow-500/30">
             <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M16.624 13.9202l2.7175 2.7154-7.353 7.353-7.353-7.353 2.7175-2.7154L12 18.5589l4.624-4.6387zm-.931-11.73L12 5.8732l-3.693-3.6832L5.6 4.9045l6.4 6.4 6.4-6.4-2.707-2.7155z" />
             </svg>
           </div>
 
-          {/* Cardano - bottom left */}
           <div className="absolute bottom-40 left-20 w-11 h-11 bg-blue-500 rounded-full flex items-center justify-center animate-float shadow-lg shadow-blue-500/30">
             <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 16.894a8.9 8.9 0 01-11.788 0 8.9 8.9 0 010-11.788 8.9 8.9 0 0111.788 0 8.9 8.9 0 010 11.788z" />
@@ -353,7 +355,6 @@ export default function AirdropPage({
             </svg>
           </div>
 
-          {/* Solana - middle right */}
           <div className="absolute top-1/2 right-12 w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center animate-float-delayed shadow-lg shadow-purple-500/30">
             <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M3.9 12.7l2.8-2.8c.2-.2.4-.3.7-.3h12.8c.5 0 .8.6.5 1l-2.8 2.8c-.2.2-.4.3-.7.3H4.4c-.5 0-.8-.6-.5-1z" />
@@ -362,7 +363,6 @@ export default function AirdropPage({
             </svg>
           </div>
 
-          {/* Polygon - top center */}
           <div className="absolute top-24 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center animate-pulse shadow-lg shadow-purple-600/30">
             <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 0L1.608 6v12L12 24l10.392-6V6L12 0zm-1.073 17.543L3.75 13.97v-3.914l7.177 3.573v7.914zm8.323-3.573l-7.177 3.573v-7.914L19.25 10.056v3.914z" />
@@ -372,6 +372,51 @@ export default function AirdropPage({
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center text-white px-4 py-8 min-h-screen">
+        {showSocialModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+              <h3 className="text-xl font-bold text-center mb-4 text-gold">Social Media Engagement Required</h3>
+              <p className="text-blue-200 text-center mb-6 text-sm">
+                To continue with the airdrop check, please complete these actions on X (Twitter):
+              </p>
+
+              <div className="bg-blue-500/20 border border-blue-300/30 rounded-lg p-4 mb-6">
+                <p className="text-blue-100 text-sm text-center mb-3">📱 Please complete these actions:</p>
+                <ul className="text-blue-200 text-sm space-y-2">
+                  <li>• Like the post</li>
+                  <li>• Retweet the post</li>
+                  <li>• Follow @SadlifeTv</li>
+                  <li>• Then return here to continue</li>
+                </ul>
+              </div>
+
+              <a
+                href="https://x.com/SadlifeTv_/status/1769708489658495122"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20 mb-4"
+              >
+                Open X Post
+              </a>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={proceedWithAirdropCheck}
+                  className="flex-1 py-3 bg-green-500 hover:bg-green-400 hover:shadow-lg hover:shadow-green-400/50 rounded-lg font-semibold transition-all duration-300"
+                >
+                  I've Completed All Actions
+                </button>
+                <button
+                  onClick={() => setShowSocialModal(false)}
+                  className="flex-1 py-3 bg-slate-600/50 hover:bg-slate-600/70 rounded-lg font-semibold transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {showConnectModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
