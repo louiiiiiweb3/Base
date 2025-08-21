@@ -2,6 +2,17 @@
 
 import { useState, useEffect } from "react"
 
+// Simple Web3 wallet connection interface
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: any[] }) => Promise<any>
+      on: (event: string, callback: (accounts: string[]) => void) => void
+      removeListener: (event: string, callback: (accounts: string[]) => void) => void
+    }
+  }
+}
+
 export default function HomePage() {
   const [totalClaimed, setTotalClaimed] = useState(1247)
   const [walletAddress, setWalletAddress] = useState("")
@@ -11,20 +22,89 @@ export default function HomePage() {
   const [isClaiming, setIsClaiming] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
   const [connectedAddress, setConnectedAddress] = useState("")
+  const [isConnecting, setIsConnecting] = useState(false)
 
   // Simulate initial stat fetch
   useEffect(() => {
     setTotalClaimed(1247)
+    // Check if wallet is already connected
+    checkWalletConnection()
   }, [])
 
-  const connectWallet = async () => {
-    // Simulate wallet connection delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+  const checkWalletConnection = async () => {
+    if (typeof window !== "undefined" && window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: "eth_accounts" })
+        if (accounts.length > 0) {
+          setConnectedAddress(accounts[0])
+          setIsConnected(true)
+        }
+      } catch (error) {
+        console.error("Error checking wallet connection:", error)
+      }
+    }
+  }
 
-    // Generate mock wallet address
-    const mockAddress = "0x" + Math.random().toString(16).substr(2, 40)
-    setConnectedAddress(mockAddress)
-    setIsConnected(true)
+  const connectWallet = async () => {
+    if (typeof window === "undefined") {
+      alert("Wallet connection is only available in browser environment")
+      return
+    }
+
+    if (!window.ethereum) {
+      alert("Please install MetaMask or another Web3 wallet to connect")
+      return
+    }
+
+    setIsConnecting(true)
+    try {
+      // Request account access
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      })
+
+      if (accounts.length > 0) {
+        setConnectedAddress(accounts[0])
+        setIsConnected(true)
+
+        // Switch to Base network (Chain ID: 8453)
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0x2105" }], // Base mainnet
+          })
+        } catch (switchError: any) {
+          // If Base network is not added, add it
+          if (switchError.code === 4902) {
+            try {
+              await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [
+                  {
+                    chainId: "0x2105",
+                    chainName: "Base",
+                    nativeCurrency: {
+                      name: "Ethereum",
+                      symbol: "ETH",
+                      decimals: 18,
+                    },
+                    rpcUrls: ["https://mainnet.base.org"],
+                    blockExplorerUrls: ["https://basescan.org"],
+                  },
+                ],
+              })
+            } catch (addError) {
+              console.error("Failed to add Base network:", addError)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to connect wallet:", error)
+      alert("Failed to connect wallet. Please try again.")
+    } finally {
+      setIsConnecting(false)
+    }
   }
 
   const disconnectWallet = () => {
@@ -58,13 +138,27 @@ export default function HomePage() {
 
     setIsClaiming(true)
     try {
-      // Simulate contract call with $1.5 fee
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      if (window.ethereum) {
+        // Simulate sending transaction with $1.5 fee (in wei)
+        const txHash = await window.ethereum.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              from: connectedAddress,
+              to: "0x1234567890123456789012345678901234567890", // Mock contract address
+              value: "0x53444835EC580000", // ~$1.5 in wei (approximate)
+              data: "0xa9059cbb", // Mock claim function selector
+            },
+          ],
+        })
 
-      setHasClaimed(true)
-      setTotalClaimed((prev) => prev + 1)
+        console.log("Transaction sent:", txHash)
+        setHasClaimed(true)
+        setTotalClaimed((prev) => prev + 1)
+      }
     } catch (error) {
       console.error("Claim failed:", error)
+      alert("Transaction failed. Please try again.")
     } finally {
       setIsClaiming(false)
     }
@@ -89,9 +183,10 @@ export default function HomePage() {
         {!isConnected ? (
           <button
             onClick={connectWallet}
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-400 rounded-lg font-semibold transition-colors duration-200 backdrop-blur-sm border border-blue-300/20"
+            disabled={isConnecting}
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-600/50 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors duration-200 backdrop-blur-sm border border-blue-300/20"
           >
-            Connect Wallet
+            {isConnecting ? "Connecting..." : "Connect Wallet"}
           </button>
         ) : (
           <div className="flex items-center gap-3">
