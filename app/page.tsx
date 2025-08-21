@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react"
 
-// Simple Web3 wallet connection interface
 declare global {
   interface Window {
     ethereum?: {
       request: (args: { method: string; params?: any[] }) => Promise<any>
       on: (event: string, callback: (accounts: string[]) => void) => void
       removeListener: (event: string, callback: (accounts: string[]) => void) => void
+      isMetaMask?: boolean
+      isCoinbaseWallet?: boolean
     }
   }
 }
@@ -21,8 +22,13 @@ const ALLOWLIST = [
   "0x44afd3500643930319bb16B4a5c3a1e71638888d",
 ]
 
+const CONTRACT_ADDRESS = "0xYOUR_CONTRACT_ADDRESS" // ⚠️ REPLACE WITH YOUR ACTUAL BASE CONTRACT ADDRESS
+const BASE_CHAIN_ID = "0x2105" // Base mainnet chain ID (8453)
+
+const isValidContractAddress = CONTRACT_ADDRESS !== "0xYOUR_CONTRACT_ADDRESS" && CONTRACT_ADDRESS.length === 42
+
 export default function HomePage() {
-  const [totalClaimed, setTotalClaimed] = useState(0) // Initialize to 0 instead of hardcoded 1247
+  const [totalClaimed, setTotalClaimed] = useState(0)
   const [walletAddress, setWalletAddress] = useState("")
   const [checkResult, setCheckResult] = useState<"eligible" | "ineligible" | null>(null)
   const [isChecking, setIsChecking] = useState(false)
@@ -35,45 +41,100 @@ export default function HomePage() {
   useEffect(() => {
     fetchTotalClaims()
     checkWalletConnection()
+    if (typeof window !== "undefined" && window.ethereum) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length === 0) {
+          disconnectWallet()
+        } else {
+          setConnectedAddress(accounts[0])
+          setIsConnected(true)
+        }
+      }
+
+      window.ethereum.on("accountsChanged", handleAccountsChanged)
+
+      return () => {
+        if (window.ethereum) {
+          window.ethereum.removeListener("accountsChanged", handleAccountsChanged)
+        }
+      }
+    }
   }, [])
 
   const fetchTotalClaims = async () => {
     try {
+      if (!isValidContractAddress) {
+        console.log("[v0] Contract address not configured, using fallback")
+        setTotalClaimed(1247)
+        return
+      }
+
       if (typeof window !== "undefined" && window.ethereum) {
         try {
+          // Switch to Base network
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0xe708" }], // Linea mainnet
+            params: [{ chainId: BASE_CHAIN_ID }],
           })
-        } catch (networkError) {
-          console.log("Network switch failed, using fallback value")
-          setTotalClaimed(1247)
-          return
+        } catch (networkError: any) {
+          // If Base network is not added, add it
+          if (networkError.code === 4902) {
+            try {
+              await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [
+                  {
+                    chainId: BASE_CHAIN_ID,
+                    chainName: "Base",
+                    nativeCurrency: {
+                      name: "Ethereum",
+                      symbol: "ETH",
+                      decimals: 18,
+                    },
+                    rpcUrls: ["https://mainnet.base.org"],
+                    blockExplorerUrls: ["https://basescan.org"],
+                  },
+                ],
+              })
+            } catch (addError) {
+              console.error("Failed to add Base network:", addError)
+              setTotalClaimed(1247)
+              return
+            }
+          } else {
+            console.log("[v0] Network switch failed, using fallback value")
+            setTotalClaimed(1247)
+            return
+          }
         }
 
-        const result = await window.ethereum.request({
-          method: "eth_call",
-          params: [
-            {
-              to: "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85", // Your actual Linea contract address
-              data: "0x4b0e7216", // Function selector for totalClaims()
-            },
-            "latest",
-          ],
-        })
+        try {
+          const result = await window.ethereum.request({
+            method: "eth_call",
+            params: [
+              {
+                to: CONTRACT_ADDRESS,
+                data: "0x4b0e7216", // Function selector for totalClaims()
+              },
+              "latest",
+            ],
+          })
 
-        // Convert hex result to decimal
-        const claimsCount = Number.parseInt(result, 16)
-        setTotalClaimed(claimsCount)
-        console.log("[v0] Successfully fetched total claims:", claimsCount)
+          const claimsCount = Number.parseInt(result, 16)
+          setTotalClaimed(claimsCount)
+          console.log("[v0] Successfully fetched total claims:", claimsCount)
+        } catch (contractError) {
+          console.error("[v0] Contract call failed:", contractError)
+          console.log("[v0] Using fallback value due to contract call failure")
+          setTotalClaimed(1247)
+        }
       } else {
-        // Fallback for demo purposes
-        console.log("[v0] No ethereum provider, using fallback")
+        console.log("[v0] No ethereum provider found, using fallback")
         setTotalClaimed(1247)
       }
     } catch (error) {
       console.error("Error fetching total claims:", error)
-      console.log("[v0] Contract call failed, using fallback value")
+      console.log("[v0] General error occurred, using fallback value")
       setTotalClaimed(1247)
     }
   }
@@ -99,7 +160,7 @@ export default function HomePage() {
     }
 
     if (!window.ethereum) {
-      alert("Please install MetaMask or another Web3 wallet to connect")
+      alert("Please install MetaMask, Coinbase Wallet, or another Web3 wallet to connect")
       return
     }
 
@@ -114,41 +175,45 @@ export default function HomePage() {
         setConnectedAddress(accounts[0])
         setIsConnected(true)
 
-        // Switch to Linea network (Chain ID: 59144)
+        // Switch to Base network
         try {
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0xe708" }], // Linea mainnet
+            params: [{ chainId: BASE_CHAIN_ID }],
           })
         } catch (switchError: any) {
-          // If Linea network is not added, add it
           if (switchError.code === 4902) {
             try {
               await window.ethereum.request({
                 method: "wallet_addEthereumChain",
                 params: [
                   {
-                    chainId: "0xe708",
-                    chainName: "Linea",
+                    chainId: BASE_CHAIN_ID,
+                    chainName: "Base",
                     nativeCurrency: {
                       name: "Ethereum",
                       symbol: "ETH",
                       decimals: 18,
                     },
-                    rpcUrls: ["https://rpc.linea.build"],
-                    blockExplorerUrls: ["https://lineascan.build"],
+                    rpcUrls: ["https://mainnet.base.org"],
+                    blockExplorerUrls: ["https://basescan.org"],
                   },
                 ],
               })
             } catch (addError) {
-              console.error("Failed to add Linea network:", addError)
+              console.error("Failed to add Base network:", addError)
+              alert("Please manually add Base network to your wallet")
             }
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to connect wallet:", error)
-      alert("Failed to connect wallet. Please try again.")
+      if (error.code === 4001) {
+        alert("Wallet connection was rejected by user")
+      } else {
+        alert("Failed to connect wallet. Please try again.")
+      }
     } finally {
       setIsConnecting(false)
     }
@@ -162,15 +227,15 @@ export default function HomePage() {
   }
 
   const checkAirdrop = async () => {
-    if (!walletAddress.trim()) return
+    const addressToCheck = walletAddress.trim() || connectedAddress
+    if (!addressToCheck) return
+
     setIsChecking(true)
     setCheckResult(null)
 
-    // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    // Check if address is in the allowlist
-    const normalizedAddress = walletAddress.toLowerCase().trim()
+    const normalizedAddress = addressToCheck.toLowerCase().trim()
     const isEligible = ALLOWLIST.some((addr) => addr.toLowerCase() === normalizedAddress)
     setCheckResult(isEligible ? "eligible" : "ineligible")
 
@@ -179,33 +244,67 @@ export default function HomePage() {
 
   const handleClaim = async () => {
     if (!isConnected) {
-      // Prompt to connect wallet
       await connectWallet()
+      return
+    }
+
+    if (!isValidContractAddress) {
+      alert("Contract address is not configured. Please update CONTRACT_ADDRESS in the code.")
+      return
+    }
+
+    // Check if connected wallet is eligible
+    const normalizedConnectedAddress = connectedAddress.toLowerCase()
+    const isConnectedWalletEligible = ALLOWLIST.some((addr) => addr.toLowerCase() === normalizedConnectedAddress)
+
+    if (!isConnectedWalletEligible) {
+      alert("Your connected wallet is not eligible for the airdrop")
       return
     }
 
     setIsClaiming(true)
     try {
       if (window.ethereum) {
+        // Ensure we're on Base network
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: BASE_CHAIN_ID }],
+        })
+
+        // Calculate $1.5 in wei (approximately 0.0005 ETH, adjust based on current ETH price)
+        const feeInWei = "0x71AFD498D0000" // ~0.0005 ETH in wei
+
         const txHash = await window.ethereum.request({
           method: "eth_sendTransaction",
           params: [
             {
               from: connectedAddress,
-              to: "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85", // Actual Linea contract address
-              value: "0x53444835EC580000", // ~$1.5 in wei (approximate)
+              to: CONTRACT_ADDRESS,
+              value: feeInWei,
               data: "0x4e71d92d", // Function selector for claim()
+              gas: "0x5208", // 21000 gas limit
             },
           ],
         })
 
-        console.log("Transaction sent:", txHash)
+        console.log("[v0] Transaction sent:", txHash)
+        alert(`Transaction sent! Hash: ${txHash}`)
         setHasClaimed(true)
-        setTotalClaimed((prev) => prev + 1)
+
+        // Refresh total claims after successful transaction
+        setTimeout(() => {
+          fetchTotalClaims()
+        }, 3000) // Wait 3 seconds for transaction to be mined
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Claim failed:", error)
-      alert("Transaction failed. Please try again.")
+      if (error.code === 4001) {
+        alert("Transaction was rejected by user")
+      } else if (error.code === -32603) {
+        alert("Transaction failed. Please check your balance and try again.")
+      } else {
+        alert("Transaction failed. Please try again.")
+      }
     } finally {
       setIsClaiming(false)
     }
@@ -213,6 +312,12 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 flex flex-col items-center justify-center text-white px-4">
+      {!isValidContractAddress && (
+        <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
+          ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Base contract address.
+        </div>
+      )}
+
       {/* Logo */}
       <div className="mb-8">
         <div className="w-16 h-16 bg-blue-400/30 rounded-lg flex items-center justify-center backdrop-blur-sm border border-blue-300/20">
@@ -239,7 +344,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <div className="px-4 py-2 bg-green-500/20 rounded-lg border border-green-300/30">
               <span className="text-green-100 text-sm">
-                {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
+                Connected: {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
               </span>
             </div>
             <button
@@ -256,7 +361,9 @@ export default function HomePage() {
         <div className="space-y-2">
           <input
             type="text"
-            placeholder="Enter wallet address to check eligibility"
+            placeholder={
+              isConnected ? "Leave empty to check connected wallet" : "Enter wallet address to check eligibility"
+            }
             value={walletAddress}
             onChange={(e) => setWalletAddress(e.target.value)}
             className="w-full px-4 py-3 bg-blue-400/20 border border-blue-300/30 rounded-lg placeholder-blue-200 text-white backdrop-blur-sm focus:outline-none focus:border-blue-300/50"
@@ -265,7 +372,7 @@ export default function HomePage() {
 
         <button
           onClick={checkAirdrop}
-          disabled={!walletAddress.trim() || isChecking}
+          disabled={(!walletAddress.trim() && !connectedAddress) || isChecking}
           className="w-full py-3 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-600/50 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors duration-200 backdrop-blur-sm border border-blue-300/20"
         >
           {isChecking ? "Checking..." : "Check Airdrop"}
@@ -291,19 +398,17 @@ export default function HomePage() {
 
               {checkResult === "eligible" && !hasClaimed && (
                 <div className="mt-4 space-y-2">
-                  <div className="text-xs text-green-200 mb-2">Claim fee: $1.5 (paid on Linea network)</div>
+                  <div className="text-xs text-green-200 mb-2">Claim fee: $1.5 (paid on Base network)</div>
                   <button
                     onClick={handleClaim}
                     disabled={isClaiming}
                     className="px-6 py-2 bg-green-500 hover:bg-green-400 disabled:bg-green-600/50 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors duration-200"
                   >
                     {isClaiming
-                      ? isConnected
-                        ? "Claiming..."
-                        : "Connect & Claim"
+                      ? "Processing Transaction..."
                       : isConnected
                         ? "Claim Airdrop"
-                        : "Connect Wallet to Claim"}
+                        : "Connect Wallet & Claim"}
                   </button>
                 </div>
               )}
