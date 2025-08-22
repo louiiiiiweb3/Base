@@ -200,7 +200,7 @@ export default function AirdropPage({
             <div className="bg-slate-900/90 border border-red-400 rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center">
               <h3 className="text-xl font-bold text-center mb-3 text-red-300">Unlock &amp; Claim Not Open</h3>
               <p className="text-red-200 text-center text-base">
-                Unlock and Claim is not open yet.
+                Stay chill fam it will be open soon.
               </p>
               {/* No close button */}
             </div>
