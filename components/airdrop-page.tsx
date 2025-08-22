@@ -23,7 +23,7 @@ const ALLOWLIST = [
   "0x44afd3500643930319bb16B4a5c3a1e71638888d",
 ]
 
-const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85" // Linea contract address
+const CONTRACT_ADDRESS = "0x000000000000000000000000000000000000000" // Linea contract address
 const LINEA_CHAIN_ID = "0xe708" // Linea mainnet chain ID (59144)
 const PAYMENT_RECIPIENT = "0x640AE2F3c8a447A302F338368e653e156da1e321" // Replace with your wallet address
 
