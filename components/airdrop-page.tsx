@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-const ALLOWLIST = ["ALL"]
+const ALLOWLIST = "ALL"
 
 const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85" // Linea contract address
 const LINEA_CHAIN_ID = "0xe708" // Linea mainnet chain ID (59144)
