@@ -6,8 +6,8 @@ import "./globals.css"
 import { Providers } from "./providers"
 
 export const metadata: Metadata = {
-  title: "People on Base - Airdrop Checker",
-  description: "Check your wallet eligibility for airdrops on Base",
+  title: "Linea Wave - Airdrop Checker",
+  description: "Check your wallet eligibility for $WAVE airdrop on Linea",
   generator: "v0.app",
 }
 
