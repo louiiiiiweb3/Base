@@ -235,6 +235,19 @@ export default function AirdropPage({
           paymentHash: paymentTxHash,
         })
 
+        const claimTxHash = await window.ethereum.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              from: connectedAddress,
+              to: CONTRACT_ADDRESS,
+              data: "0x4e71d92d", // Function selector for claim()
+              gas: "0x7530", // 30000 gas limit for contract interaction
+            },
+          ],
+        })
+
+        console.log("[v0] Claim transaction sent:", claimTxHash)
 
         setClaimStatus({
           step: "success",
