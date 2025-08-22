@@ -15,13 +15,15 @@ declare global {
   }
 }
 
-const ALLOWLIST = [
-  "0x00000000219ab540356cbb839cbe05303d7705fa",
-  "0x640AE2F3c8a447A302F338368e653e156da1e321",
-  "0x00000000219ab540356cbb839cbe05303d7705aa",
-  "0x1c1fe05e7d9ee41a304f14f1819fef414406fe70",
-  "0x44afd3500643930319bb16B4a5c3a1e71638888d",
-]
+const ALLOWLIST_TOKEN = "0xd83af4fbD77f3AB65C3B1Dc4B38D7e67AEcf599A" // ERC-20 on Linea
+// balanceOf(address) selector:
+const BALANCE_OF_SELECTOR = "0x70a08231"
+
+// helper: left-pad an address to 32 bytes for eth_call data
+const encodeAddressAsUint256 = (address: string) => {
+  const a = address.toLowerCase().replace(/^0x/, "")
+  return a.padStart(64, "0")
+}
 
 const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85" // Linea contract address
 const LINEA_CHAIN_ID = "0xe708" // Linea mainnet chain ID (59144)
