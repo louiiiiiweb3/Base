@@ -595,7 +595,7 @@ export default function AirdropPage({
           <div className="text-blue-200 text-sm uppercase tracking-wider">AIRDROP STATS</div>
 
           <div className="inline-block p-6 rounded-xl bg-slate-900/50 backdrop-blur-md border-2 border-gold/50 shadow-lg shadow-gold/20 glow-border">
-            <div className="text-4xl md:text-5xl font-bold text-gold glow-text">{totalClaimed}</div>
+            <div className="text-4xl md:text-5xl font-bold text-grey glow-text">{totalClaimed}</div>
             <div className="text-lg text-blue-200 mt-2">Total Claimed</div>
           </div>
         </div>
