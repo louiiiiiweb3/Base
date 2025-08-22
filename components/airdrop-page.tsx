@@ -451,7 +451,7 @@ export default function AirdropPage({
 
         <div className="mb-8">
           <div className="w-16 h-16 bg-blue-400/30 rounded-lg flex items-center justify-center backdrop-blur-sm border border-blue-300/20">
-            <span className="text-2xl font-bold text-white">P</span>
+            <span className="text-2xl font-bold text-white">LINEA WAVE</span>
           </div>
         </div>
 
