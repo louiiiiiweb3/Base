@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import AirdropPage from "@/components/airdrop-page"
+import AirdropPage from "@/components/Launchpad-page"
 
 declare global {
   interface Window {
