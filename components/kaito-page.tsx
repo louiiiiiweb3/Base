@@ -6,23 +6,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy, Twitter, TrendingUp, Coins, Award, Star, Zap } from "lucide-react"
+import { Copy, Twitter, TrendingUp, Coins, Award, Star, Zap, X, Info } from "lucide-react"
 import { twitterAPI, type TwitterUser, type TwitterMetrics } from "@/lib/twitter-api"
 import { TipCoinPointSystem, type TweetMetrics, type PointCalculation } from "@/lib/tipcoin-points"
 
+// ----- Updated Popup -----
 function Popup({ open, onClose, title, message }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-      <div className="rounded-xl shadow-lg p-8 max-w-sm border-white border-2 w-full h-min py-8 px-8 my-0 opacity-100 bg-transparent">
-        <h2 className="text-xl text-white mb-2 font-extrabold">{title}</h2>
-        <div className="text-gray-200 mb-6 font-bold">{message}</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="fixed inset-0 bg-gradient-to-br from-black/80 via-purple-900/70 to-black/80 backdrop-blur-md transition-opacity"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <div className="relative z-10 bg-gradient-to-br from-slate-950 to-slate-800 border border-purple-500/40 rounded-2xl shadow-2xl max-w-md w-full mx-auto px-8 py-8 flex flex-col items-center animate-fadeIn">
         <button
-          className="text-white px-5 py-2 rounded hover:bg-purple-700 flex-row font-extrabold bg-red-600"
+          className="absolute top-4 right-4 text-gray-400 hover:text-purple-400 transition"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        <div className="mb-4 flex items-center justify-center">
+          <Info className="w-8 h-8 text-purple-400 mr-2" />
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            {title}
+          </h2>
+        </div>
+        <div className="text-base text-gray-300 mb-6 text-center leading-relaxed">
+          {message}
+        </div>
+        <button
+          className="mt-2 px-7 py-2 rounded-lg font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:scale-105 transition-all shadow-lg"
           onClick={onClose}
         >
           OK
         </button>
+        <style jsx>{`
+          .animate-fadeIn { animation: fadeIn 0.38s ease; }
+          @keyframes fadeIn {
+            0% {opacity: 0; transform: scale(0.98);}
+            100% {opacity: 1; transform: scale(1);}
+          }
+        `}</style>
       </div>
     </div>
   )
@@ -53,6 +80,7 @@ export default function WavePage({
   const [exampleCalculation, setExampleCalculation] = useState<PointCalculation | null>(null)
   const [showWelcomePopup, setShowWelcomePopup] = useState(true)
   const [showTwitterPopup, setShowTwitterPopup] = useState(false)
+  const [twitterInfoAcknowledged, setTwitterInfoAcknowledged] = useState(false) // ADD THIS
 
   const [userStats, setUserStats] = useState({
     totalEarned: 0,
@@ -84,27 +112,37 @@ export default function WavePage({
   }, [])
 
   useEffect(() => {
-    // Generate example calculation on component mount
     const example = TipCoinPointSystem.generateExampleCalculation()
     setExampleCalculation(example)
   }, [])
 
+  const connectTwitter = async () => {
+    // Replace with your twitter connect logic; eg, call your oauth endpoint or API
+    setIsLoadingTwitter(true);
+    try {
+      // Simulate delay or real connection:
+      // await twitterAPI.connect()
+      // ...then setConnected states, etc
+      setTimeout(() => {
+        setIsTwitterConnected(true);
+        setIsLoadingTwitter(false);
+        // Optionally, load profile/data here too
+      }, 1000);
+    } catch (e) {
+      setIsLoadingTwitter(false);
+    }
+  };
+
   const loadTwitterData = async () => {
     try {
       setIsLoadingTwitter(true)
-
-      // Get user profile
       const user = await twitterAPI.getUserProfile()
       setTwitterUser(user)
-
-      // Get user metrics
       const metrics = await twitterAPI.getUserMetrics(user.id)
       setTwitterMetrics(metrics)
-
-      // Mock tweet data for demonstration (in real implementation, this would come from Twitter API)
       const mockTweets: TweetMetrics[] = [
         {
-          views: metrics.tweets * 50, // Estimate views
+          views: metrics.tweets * 50,
           likes: metrics.likes,
           replies: Math.floor(metrics.likes * 0.1),
           quotes: Math.floor(metrics.retweets * 0.3),
@@ -133,16 +171,11 @@ export default function WavePage({
       })
 
       setWeeklyPoints(weeklyPointsCalculated)
-
-      // Convert points to tokens (1000 points = 1 WAVE token for example)
       const tokensEarned = weeklyPointsCalculated / 1000
-
-      setEngagementScore(Math.min(10, weeklyPointsCalculated / 100000)) // Scale to 0-10
+      setEngagementScore(Math.min(10, weeklyPointsCalculated / 100000))
       setEarnedTokens(tokensEarned)
-
-      // Update user stats with TipCoin system data
       setUserStats({
-        totalEarned: tokensEarned * 4, // Simulate total over multiple weeks
+        totalEarned: tokensEarned * 4,
         weeklyEarned: tokensEarned,
         rank: Math.floor(Math.random() * 100) + 1,
         engagementScore: Math.min(10, weeklyPointsCalculated / 100000),
@@ -158,9 +191,6 @@ export default function WavePage({
     }
   }
 
-  // Twitter Connect now only shows a popup
-  // const handleTwitterConnect = async () => { ... }
-
   const handleTwitterDisconnect = () => {
     twitterAPI.logout()
     setIsTwitterConnected(false)
@@ -170,7 +200,6 @@ export default function WavePage({
     setEarnedTokens(0)
     setWeeklyPoints(0)
     setExampleCalculation(null)
-    // Reset to default stats
     setUserStats({
       totalEarned: 0,
       weeklyEarned: 0,
@@ -181,6 +210,7 @@ export default function WavePage({
       retweets: 0,
       likes: 0,
     })
+    setTwitterInfoAcknowledged(false)
   }
 
   const copyToClipboard = (text: string) => {
@@ -189,7 +219,7 @@ export default function WavePage({
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Popups */}
+      {/* Updated Popups */}
       <Popup
         open={showWelcomePopup}
         onClose={() => setShowWelcomePopup(false)}
@@ -203,43 +233,31 @@ export default function WavePage({
       />
       <Popup
         open={showTwitterPopup}
-        onClose={() => setShowTwitterPopup(false)}
+        onClose={() => {
+          setShowTwitterPopup(false);
+          setTwitterInfoAcknowledged(true);
+        }}
         title="Twitter/X Connection"
         message={
           <>
             Twitter/X integration is on the way. We’re just adding the final touches.<br /><br />
-            Till then, just walk around and feel it!In the meantime, explore Waves and enjoy the experience! 🌊
+            Till then, just walk around and feel it! In the meantime, explore Waves and enjoy the experience! 🌊
           </>
         }
       />
 
-      {/* ... existing background code ... */}
+      {/* ... background and floating elements ... */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(120,119,198,0.3),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.3),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_80%,rgba(120,200,255,0.3),transparent_50%)] bg-black" />
-
-        {/* Floating Elements */}
-        <div
-          className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-20 animate-bounce text-teal-900"
-          style={{ animationDelay: "0s", animationDuration: "3s" }}
-        />
-        <div
-          className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full opacity-20 animate-bounce"
-          style={{ animationDelay: "1s", animationDuration: "4s" }}
-        />
-        <div
-          className="absolute bottom-40 left-20 w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full opacity-20 animate-bounce"
-          style={{ animationDelay: "2s", animationDuration: "5s" }}
-        />
-        <div
-          className="absolute bottom-20 right-10 w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full opacity-20 animate-bounce"
-          style={{ animationDelay: "0.5s", animationDuration: "3.5s" }}
-        />
+        <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-20 animate-bounce" style={{ animationDelay: "0s", animationDuration: "3s" }} />
+        <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full opacity-20 animate-bounce" style={{ animationDelay: "1s", animationDuration: "4s" }} />
+        <div className="absolute bottom-40 left-20 w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full opacity-20 animate-bounce" style={{ animationDelay: "2s", animationDuration: "5s" }} />
+        <div className="absolute bottom-20 right-10 w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full opacity-20 animate-bounce" style={{ animationDelay: "0.5s", animationDuration: "3.5s" }} />
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent animate-pulse">
             $WAVE
