@@ -17,6 +17,7 @@ declare global {
 }
 
 const LINEA_CHAIN_ID = "0xe708" // Linea mainnet chain ID (59144)
+const LOGO_URL = "https://i.ibb.co/rRxLFDwh/Chat-GPT-Image-Aug-23-2025-01-22-50-PM.png"
 
 export default function HomePage() {
   const [currentPage, setCurrentPage] = useState<"airdrop" | "kaito">("airdrop")
@@ -133,11 +134,19 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Navigation Header */}
-      <div className="relative z-20 backdrop-blur-sm border-emerald-500 border-b-2 text-trasnparent bg-black">
+      <div className={`relative z-20 backdrop-blur-sm border-emerald-500 border-b-2
+        ${currentPage === "kaito" ? "bg-black" : "bg-transparent"}
+      `}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text gap-0 leading-7 bg-transparent text-transparent shadow-none">
+              {/* Logo added here */}
+              <img
+                src={LOGO_URL}
+                alt="Logo"
+                className="h-10 w-10 rounded-full shadow-md"
+              />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text gap-0 leading-7 text-transparent shadow-none">
                 LineaWaves 
               </h1>
               <nav className="flex gap-4">
