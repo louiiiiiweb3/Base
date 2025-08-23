@@ -62,7 +62,7 @@ export default function AirdropPage({
   const fetchTotalClaims = async () => {
     try {
       if (!isValidContractAddress) {
-        setTotalClaimed(Updates every 4hrs)
+        setTotalClaimed(0)
         return
       }
 
@@ -92,11 +92,11 @@ export default function AirdropPage({
                 ],
               })
             } catch (addError) {
-              setTotalClaimed(Updates every 4hrs)
+              setTotalClaimed(0)
               return
             }
           } else {
-            setTotalClaimed(Updates every 4hrs)
+            setTotalClaimed(0)
             return
           }
         }
@@ -115,13 +115,13 @@ export default function AirdropPage({
           const claimsCount = Number.parseInt(result, 16)
           setTotalClaimed(claimsCount)
         } catch {
-          setTotalClaimed(Updates every 4hrs)
+          setTotalClaimed(0)
         }
       } else {
-        setTotalClaimed(Updates every 4hrs)
+        setTotalClaimed(0)
       }
     } catch {
-      setTotalClaimed(Updates every 4hrs)
+      setTotalClaimed(0)
     }
   }
 
