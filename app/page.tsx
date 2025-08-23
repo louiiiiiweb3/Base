@@ -133,12 +133,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Navigation Header */}
-      <div className="relative z-20 bg-black/20 backdrop-blur-sm border-b border-purple-500/30">
+      <div className="relative z-20 backdrop-blur-sm border-b border-purple-500/30 text-black bg-black">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                CRYPTOWAVE
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-green-500">
+                Linea Waves 
               </h1>
               <nav className="flex gap-4">
                 <button

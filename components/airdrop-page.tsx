@@ -62,7 +62,7 @@ export default function AirdropPage({
   const fetchTotalClaims = async () => {
     try {
       if (!isValidContractAddress) {
-        setTotalClaimed(1247)
+        setTotalClaimed(Updates every 4hrs)
         return
       }
 
@@ -92,11 +92,11 @@ export default function AirdropPage({
                 ],
               })
             } catch (addError) {
-              setTotalClaimed(1247)
+              setTotalClaimed(Updates every 4hrs)
               return
             }
           } else {
-            setTotalClaimed(1247)
+            setTotalClaimed(Updates every 4hrs)
             return
           }
         }
@@ -115,13 +115,13 @@ export default function AirdropPage({
           const claimsCount = Number.parseInt(result, 16)
           setTotalClaimed(claimsCount)
         } catch {
-          setTotalClaimed(1247)
+          setTotalClaimed(Updates every 4hrs)
         }
       } else {
-        setTotalClaimed(1247)
+        setTotalClaimed(Updates every 4hrs)
       }
     } catch {
-      setTotalClaimed(1247)
+      setTotalClaimed(Updates every 4hrs)
     }
   }
 
@@ -411,7 +411,7 @@ export default function AirdropPage({
           <div className="text-blue-200 text-sm uppercase tracking-wider">AIRDROP STATS</div>
           <div className="inline-block p-6 rounded-xl bg-slate-900/50 backdrop-blur-md border-2 border-gold/50 shadow-lg shadow-gold/20 glow-border">
             <div className="text-4xl md:text-5xl font-bold text-grey glow-text">{totalClaimed}</div>
-            <div className="text-lg text-blue-200 mt-2">Total Claimed</div>
+            <div className="text-lg text-blue-200 mt-2">{"CLAIMS NOT OPEN "}</div>
           </div>
         </div>
       </div>

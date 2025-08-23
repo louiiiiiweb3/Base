@@ -10,7 +10,25 @@ import { Copy, Twitter, TrendingUp, Coins, Award, Star, Zap } from "lucide-react
 import { twitterAPI, type TwitterUser, type TwitterMetrics } from "@/lib/twitter-api"
 import { TipCoinPointSystem, type TweetMetrics, type PointCalculation } from "@/lib/tipcoin-points"
 
-interface KaitoPageProps {
+function Popup({ open, onClose, title, message }) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+      <div className="rounded-xl shadow-lg p-8 max-w-sm bg-green-400 border-white border-2 w-full h-min py-8 px-8 my-0 opacity-100">
+        <h2 className="text-xl text-white mb-2 font-extrabold">{title}</h2>
+        <div className="text-gray-200 mb-6 font-bold">{message}</div>
+        <button
+          className="bg-purple-600 text-white px-5 py-2 rounded hover:bg-purple-700 flex-row font-extrabold"
+          onClick={onClose}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface WavePageProps {
   isConnected: boolean
   connectedAddress: string
   connectWallet: () => void
@@ -18,13 +36,13 @@ interface KaitoPageProps {
   isConnecting: boolean
 }
 
-export default function KaitoPage({
+export default function WavePage({
   isConnected,
   connectedAddress,
   connectWallet,
   disconnectWallet,
   isConnecting,
-}: KaitoPageProps) {
+}: WavePageProps) {
   const [twitterUser, setTwitterUser] = useState<TwitterUser | null>(null)
   const [twitterMetrics, setTwitterMetrics] = useState<TwitterMetrics | null>(null)
   const [isTwitterConnected, setIsTwitterConnected] = useState(false)
@@ -33,6 +51,8 @@ export default function KaitoPage({
   const [earnedTokens, setEarnedTokens] = useState(0)
   const [weeklyPoints, setWeeklyPoints] = useState(0)
   const [exampleCalculation, setExampleCalculation] = useState<PointCalculation | null>(null)
+  const [showWelcomePopup, setShowWelcomePopup] = useState(true)
+  const [showTwitterPopup, setShowTwitterPopup] = useState(false)
 
   const [userStats, setUserStats] = useState({
     totalEarned: 0,
@@ -114,7 +134,7 @@ export default function KaitoPage({
 
       setWeeklyPoints(weeklyPointsCalculated)
 
-      // Convert points to tokens (1000 points = 1 KAITO token for example)
+      // Convert points to tokens (1000 points = 1 WAVE token for example)
       const tokensEarned = weeklyPointsCalculated / 1000
 
       setEngagementScore(Math.min(10, weeklyPointsCalculated / 100000)) // Scale to 0-10
@@ -138,16 +158,8 @@ export default function KaitoPage({
     }
   }
 
-  const handleTwitterConnect = async () => {
-    try {
-      setIsLoadingTwitter(true)
-      const authURL = await twitterAPI.initiateAuth()
-      window.location.href = authURL
-    } catch (error) {
-      console.error("Twitter connection failed:", error)
-      setIsLoadingTwitter(false)
-    }
-  }
+  // Twitter Connect now only shows a popup
+  // const handleTwitterConnect = async () => { ... }
 
   const handleTwitterDisconnect = () => {
     twitterAPI.logout()
@@ -177,15 +189,39 @@ export default function KaitoPage({
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Popups */}
+      <Popup
+        open={showWelcomePopup}
+        onClose={() => setShowWelcomePopup(false)}
+        title="📢 Notice: Linea Waves"
+        message={
+          <>
+            We’re in the final stage of development, and Twitter integration isn’t live just yet.<br /><br />
+            In the meantime, feel free to explore and start using Waves today! 🌊
+          </>
+        }
+      />
+      <Popup
+        open={showTwitterPopup}
+        onClose={() => setShowTwitterPopup(false)}
+        title="Twitter/X Connection"
+        message={
+          <>
+            Twitter/X integration is on the way. We’re just adding the final touches.<br /><br />
+            Till then, just walk around and feel it!In the meantime, explore Waves and enjoy the experience! 🌊
+          </>
+        }
+      />
+
       {/* ... existing background code ... */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(120,119,198,0.3),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.3),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_80%,rgba(120,200,255,0.3),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_80%,rgba(120,200,255,0.3),transparent_50%)] bg-black" />
 
         {/* Floating Elements */}
         <div
-          className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-20 animate-bounce"
+          className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-20 animate-bounce text-teal-900"
           style={{ animationDelay: "0s", animationDuration: "3s" }}
         />
         <div
@@ -206,9 +242,9 @@ export default function KaitoPage({
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent animate-pulse">
-            KAITO
+            $WAVE
           </h1>
-          <p className="text-xl text-gray-300 mb-6">Earn Crypto Rewards for Social Media Engagement</p>
+          <p className="text-xl text-gray-300 mb-6">Earn $WAVE Rewards for Social Media Engagement</p>
           <div className="flex justify-center gap-4">
             {!isConnected ? (
               <Button
@@ -248,17 +284,17 @@ export default function KaitoPage({
 
         {isConnected ? (
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-black/20 backdrop-blur-sm border border-purple-500/30">
-              <TabsTrigger value="dashboard" className="data-[state=active]:bg-purple-600">
+            <TabsList className="grid w-full grid-cols-4 backdrop-blur-sm border border-purple-500/30 bg-cyan-200">
+              <TabsTrigger value="dashboard" className="data-[state=active]:bg-purple-600 bg-green-400">
                 Dashboard
               </TabsTrigger>
-              <TabsTrigger value="earn" className="data-[state=active]:bg-purple-600">
+              <TabsTrigger value="earn" className="data-[state=active]:bg-purple-600 bg-green-400">
                 Earn
               </TabsTrigger>
-              <TabsTrigger value="leaderboard" className="data-[state=active]:bg-purple-600">
+              <TabsTrigger value="leaderboard" className="data-[state=active]:bg-purple-600 bg-green-400">
                 Leaderboard
               </TabsTrigger>
-              <TabsTrigger value="rewards" className="data-[state=active]:bg-purple-600">
+              <TabsTrigger value="rewards" className="data-[state=active]:bg-purple-600 text-black bg-green-400">
                 Rewards
               </TabsTrigger>
             </TabsList>
@@ -271,26 +307,24 @@ export default function KaitoPage({
                     <Coins className="h-4 w-4 text-purple-400" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">{userStats.totalEarned.toFixed(1)} KAITO</div>
+                    <div className="text-2xl font-bold text-white">{userStats.totalEarned.toFixed(1)} WAVE</div>
                     <p className="text-xs text-gray-400">
                       {isTwitterConnected ? "Based on real activity" : "Connect Twitter to earn"}
                     </p>
                   </CardContent>
                 </Card>
-
                 <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-gray-300">Weekly Earned</CardTitle>
                     <TrendingUp className="h-4 w-4 text-green-400" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">{userStats.weeklyEarned.toFixed(1)} KAITO</div>
+                    <div className="text-2xl font-bold text-white">{userStats.weeklyEarned.toFixed(1)} WAVE</div>
                     <p className="text-xs text-gray-400">
                       {isTwitterConnected ? "From recent activity" : "Connect to start earning"}
                     </p>
                   </CardContent>
                 </Card>
-
                 <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-gray-300">Global Rank</CardTitle>
@@ -305,7 +339,6 @@ export default function KaitoPage({
                     </p>
                   </CardContent>
                 </Card>
-
                 <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-gray-300">Engagement Score</CardTitle>
@@ -317,7 +350,6 @@ export default function KaitoPage({
                   </CardContent>
                 </Card>
               </div>
-
               <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
@@ -362,7 +394,7 @@ export default function KaitoPage({
                 <CardHeader>
                   <CardTitle className="text-white">Connect Your Social Accounts</CardTitle>
                   <CardDescription className="text-gray-400">
-                    Link your social media to start earning KAITO tokens based on real activity
+                    Link your social media to start earning WAVE tokens based on real activity
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -388,7 +420,7 @@ export default function KaitoPage({
                     {!isTwitterConnected ? (
                       <Button
                         className="bg-blue-600 hover:bg-blue-700"
-                        onClick={handleTwitterConnect}
+                        onClick={() => setShowTwitterPopup(true)}
                         disabled={isLoadingTwitter}
                       >
                         {isLoadingTwitter ? "Connecting..." : "Connect"}
@@ -415,11 +447,10 @@ export default function KaitoPage({
                       </div>
                     )}
                   </div>
-
                   {/* TipCoin point system explanation */}
                   <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30">
                     <CardHeader>
-                      <CardTitle className="text-white">TipCoin Point System</CardTitle>
+                      <CardTitle className="text-white">Waves Point System</CardTitle>
                       <CardDescription className="text-gray-400">
                         Earn points based on Twitter/X engagement with multipliers for different tweet types
                       </CardDescription>
@@ -451,7 +482,6 @@ export default function KaitoPage({
                             </div>
                           </div>
                         </div>
-
                         <div>
                           <h4 className="font-semibold text-white mb-3">Multipliers</h4>
                           <div className="space-y-2 text-sm">
@@ -474,7 +504,6 @@ export default function KaitoPage({
                           </div>
                         </div>
                       </div>
-
                       {exampleCalculation && (
                         <div className="border border-purple-500/30 rounded-lg p-4">
                           <h4 className="font-semibold text-white mb-3">Example Calculation</h4>
@@ -499,7 +528,6 @@ export default function KaitoPage({
                           </div>
                         </div>
                       )}
-
                       <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Zap className="w-4 h-4 text-yellow-400" />
@@ -509,12 +537,11 @@ export default function KaitoPage({
                           {TipCoinPointSystem.formatPoints(weeklyPoints)} points
                         </div>
                         <div className="text-sm text-gray-400 mt-1">
-                          ≈ {(weeklyPoints / 1000).toFixed(1)} KAITO tokens
+                          ≈ {(weeklyPoints / 1000).toFixed(1)} WAVE tokens
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-
                   {/* ... existing task cards ... */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     <Card className="bg-purple-900/20 border border-purple-500/30">
@@ -524,19 +551,18 @@ export default function KaitoPage({
                       <CardContent className="space-y-3">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-300">Tweet with #KAITO</span>
-                          <Badge variant="secondary">+10 KAITO</Badge>
+                          <Badge variant="secondary">+10 Points </Badge>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-300">Retweet official posts</span>
-                          <Badge variant="secondary">+5 KAITO</Badge>
+                          <Badge variant="secondary">+5 Points</Badge>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-300">Engage with community</span>
-                          <Badge variant="secondary">+3 KAITO</Badge>
+                          <Badge variant="secondary">+3 Points</Badge>
                         </div>
                       </CardContent>
                     </Card>
-
                     <Card className="bg-purple-900/20 border border-purple-500/30">
                       <CardHeader>
                         <CardTitle className="text-lg text-white">Bonus Rewards</CardTitle>
@@ -544,15 +570,15 @@ export default function KaitoPage({
                       <CardContent className="space-y-3">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-300">Weekly streak</span>
-                          <Badge variant="secondary">+50 KAITO</Badge>
+                          <Badge variant="secondary">+50 Points </Badge>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-300">Refer friends</span>
-                          <Badge variant="secondary">+100 KAITO</Badge>
+                          <Badge variant="secondary">+100 Points</Badge>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-300">Top engager</span>
-                          <Badge variant="secondary">+200 KAITO</Badge>
+                          <Badge variant="secondary">+200 Points</Badge>
                         </div>
                       </CardContent>
                     </Card>
@@ -560,7 +586,6 @@ export default function KaitoPage({
                 </CardContent>
               </Card>
             </TabsContent>
-
             {/* ... existing leaderboard and rewards tabs ... */}
             <TabsContent value="leaderboard" className="space-y-6">
               <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30">
@@ -595,7 +620,7 @@ export default function KaitoPage({
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-bold text-purple-400">{user.earned} KAITO</div>
+                          <div className="font-bold text-purple-400">{user.earned} WAVE</div>
                         </div>
                       </div>
                     ))}
@@ -614,7 +639,7 @@ export default function KaitoPage({
                   <div className="text-center space-y-6">
                     <div>
                       <div className="text-4xl font-bold text-purple-400 mb-2">
-                        {userStats.weeklyEarned.toFixed(1)} KAITO
+                        {userStats.weeklyEarned.toFixed(1)} WAVE
                       </div>
                       <div className="text-gray-400">Available to claim</div>
                     </div>
@@ -625,7 +650,6 @@ export default function KaitoPage({
                   </div>
                 </CardContent>
               </Card>
-
               <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30">
                 <CardHeader>
                   <CardTitle className="text-white">Reward History</CardTitle>
@@ -634,15 +658,15 @@ export default function KaitoPage({
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 border border-purple-500/20 rounded">
                       <span className="text-gray-300">Weekly engagement bonus</span>
-                      <span className="text-green-400">+{(userStats.weeklyEarned * 0.6).toFixed(1)} KAITO</span>
+                      <span className="text-green-400">+{(userStats.weeklyEarned * 0.6).toFixed(1)} WAVE</span>
                     </div>
                     <div className="flex justify-between items-center p-3 border border-purple-500/20 rounded">
                       <span className="text-gray-300">Daily tweet rewards</span>
-                      <span className="text-green-400">+{(userStats.weeklyEarned * 0.3).toFixed(1)} KAITO</span>
+                      <span className="text-green-400">+{(userStats.weeklyEarned * 0.3).toFixed(1)} WAVE</span>
                     </div>
                     <div className="flex justify-between items-center p-3 border border-purple-500/20 rounded">
                       <span className="text-gray-300">Community engagement</span>
-                      <span className="text-green-400">+{(userStats.weeklyEarned * 0.1).toFixed(1)} KAITO</span>
+                      <span className="text-green-400">+{(userStats.weeklyEarned * 0.1).toFixed(1)} WAVE</span>
                     </div>
                   </div>
                 </CardContent>
@@ -653,7 +677,7 @@ export default function KaitoPage({
           <div className="text-center space-y-8">
             <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30 max-w-2xl mx-auto">
               <CardHeader>
-                <CardTitle className="text-2xl text-white">Welcome to Kaito</CardTitle>
+                <CardTitle className="text-2xl text-white">Welcome to WAVE</CardTitle>
                 <CardDescription className="text-gray-400">
                   The revolutionary social reward platform that pays you for your social media engagement
                 </CardDescription>
@@ -668,7 +692,7 @@ export default function KaitoPage({
                   <div className="text-center space-y-2">
                     <Coins className="w-8 h-8 text-purple-400 mx-auto" />
                     <h3 className="font-semibold text-white">Earn</h3>
-                    <p className="text-sm text-gray-400">Get rewarded with KAITO tokens for your activity</p>
+                    <p className="text-sm text-gray-400">Get rewarded with WAVE tokens for your activity</p>
                   </div>
                   <div className="text-center space-y-2">
                     <Award className="w-8 h-8 text-yellow-400 mx-auto" />
