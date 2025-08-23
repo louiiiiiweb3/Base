@@ -34,19 +34,15 @@ export default function HomePage() {
           setIsConnected(true)
         }
       }
-
       window.ethereum.on("accountsChanged", handleAccountsChanged)
-
       return () => {
-        if (window.ethereum) {
-          window.ethereum.removeListener("accountsChanged", handleAccountsChanged)
-        }
+        window.ethereum?.removeListener("accountsChanged", handleAccountsChanged)
       }
     }
   }, [])
 
   const checkWalletConnection = async () => {
-    if (typeof window !== "undefined" && window.ethereum) {
+    if (window.ethereum) {
       try {
         const accounts = await window.ethereum.request({ method: "eth_accounts" })
         if (accounts.length > 0) {
@@ -60,65 +56,27 @@ export default function HomePage() {
   }
 
   const connectWallet = async () => {
-    if (typeof window === "undefined") {
-      alert("Wallet connection is only available in browser environment")
-      return
-    }
-
     if (!window.ethereum) {
-      alert("Please install MetaMask, Coinbase Wallet, or another Web3 wallet to connect")
+      alert("Please install MetaMask or Coinbase Wallet")
       return
     }
-
     setIsConnecting(true)
     try {
-      // Request account access
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      })
-
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
       if (accounts.length > 0) {
         setConnectedAddress(accounts[0])
         setIsConnected(true)
-
         try {
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
             params: [{ chainId: LINEA_CHAIN_ID }],
           })
         } catch (switchError: any) {
-          if (switchError.code === 4902) {
-            try {
-              await window.ethereum.request({
-                method: "wallet_addEthereumChain",
-                params: [
-                  {
-                    chainId: LINEA_CHAIN_ID,
-                    chainName: "Linea",
-                    nativeCurrency: {
-                      name: "Ethereum",
-                      symbol: "ETH",
-                      decimals: 18,
-                    },
-                    rpcUrls: ["https://rpc.linea.build"],
-                    blockExplorerUrls: ["https://lineascan.build"],
-                  },
-                ],
-              })
-            } catch (addError) {
-              console.error("Failed to add Linea network:", addError)
-              alert("Please manually add Linea network to your wallet")
-            }
-          }
+          console.error("Failed to switch chain", switchError)
         }
       }
-    } catch (error: any) {
-      console.error("Failed to connect wallet:", error)
-      if (error.code === 4001) {
-        alert("Wallet connection was rejected by user")
-      } else {
-        alert("Failed to connect wallet. Please try again.")
-      }
+    } catch (err) {
+      console.error("Wallet connection failed:", err)
     } finally {
       setIsConnecting(false)
     }
@@ -132,6 +90,13 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700">
       <AirdropPage
+        isConnected={isConnected}
+        connectedAddress={connectedAddress}
+        connectWallet={connectWallet}
+        disconnectWallet={disconnectWallet}
+        isConnecting={isConnecting}
+      />
+      <LaunchpadPage
         isConnected={isConnected}
         connectedAddress={connectedAddress}
         connectWallet={connectWallet}
