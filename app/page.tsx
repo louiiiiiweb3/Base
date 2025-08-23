@@ -139,20 +139,18 @@ export default function HomePage() {
       `}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
+            <div className="flex gap-8 py-0 my-0 mx-0 items-center w-auto h-auto">
               {/* Logo added here */}
               <img
                 src={LOGO_URL}
                 alt="Logo"
                 className="h-10 w-10 rounded-full shadow-md"
               />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text gap-0 leading-7 text-transparent shadow-none">
-                LineaWaves 
-              </h1>
+              
               <nav className="flex gap-4">
                 <button
                   onClick={() => setCurrentPage("airdrop")}
-                  className={`px-4 py-2 rounded-lg transition-all duration-300 font-bold bg-sky-600 ${
+                  className={`px-4 py-2 rounded-lg transition-all duration-300 font-bold bg-sky-600 flex-row ${
                     currentPage === "airdrop"
                       ? "bg-purple-600 text-white shadow-lg shadow-purple-500/25"
                       : "text-gray-300 hover:text-white hover:bg-purple-600/20"
