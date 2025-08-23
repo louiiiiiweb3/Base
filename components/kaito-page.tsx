@@ -14,11 +14,11 @@ function Popup({ open, onClose, title, message }) {
   if (!open) return null
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-      <div className="rounded-xl shadow-lg p-8 max-w-sm bg-green-400 border-white border-2 w-full h-min py-8 px-8 my-0 opacity-100">
+      <div className="rounded-xl shadow-lg p-8 max-w-sm border-white border-2 w-full h-min py-8 px-8 my-0 opacity-100 bg-cyan-500">
         <h2 className="text-xl text-white mb-2 font-extrabold">{title}</h2>
         <div className="text-gray-200 mb-6 font-bold">{message}</div>
         <button
-          className="bg-purple-600 text-white px-5 py-2 rounded hover:bg-purple-700 flex-row font-extrabold"
+          className="text-white px-5 py-2 rounded hover:bg-purple-700 flex-row font-extrabold bg-red-600"
           onClick={onClose}
         >
           OK
