@@ -278,9 +278,7 @@ export default function AirdropPage({
           </div>
         )}
         <div className="mb-8">
-          <div className="w-16 h-16 bg-blue-400/30 rounded-lg flex items-center justify-center backdrop-blur-sm border border-blue-300/20">
-            <span className="text-2xl font-bold text-white">LINEA WAVE</span>
-          </div>
+          
         </div>
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
           $WAVE
