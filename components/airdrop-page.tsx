@@ -252,7 +252,7 @@ export default function AirdropPage({
                 <ul className="text-blue-200 text-sm space-y-2">
                   <li>• Like the post</li>
                   <li>• Retweet the post</li>
-                  <li>• Follow @SadlifeTv</li>
+                  <li>• Follow @Lineawaves</li>
                   <li>• Then return here to continue</li>
                 </ul>
               </div>
@@ -286,11 +286,11 @@ export default function AirdropPage({
                     🔁 RT
                   </a>
                   <a
-                    href="https://twitter.com/intent/follow?screen_name=SadlifeTv_"
+                    href="https://twitter.com/intent/follow?screen_name=Lineawaves"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
-                    title="Follow @SadlifeTv"
+                    title="Follow @Lineawaves"
                   >
                     ➕ Follow
                   </a>
