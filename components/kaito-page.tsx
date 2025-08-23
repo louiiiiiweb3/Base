@@ -241,7 +241,7 @@ export default function WavePage({
         message={
           <>
             Twitter/X integration is on the way. We’re just adding the final touches.<br /><br />
-            Till then, just walk around and feel it! In the meantime, explore Waves and enjoy the experience! 🌊
+            Till then, just walk around and feel it! 🌊
           </>
         }
       />
