@@ -260,7 +260,7 @@ export default function WavePage({
       <div className="relative z-10 container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent animate-pulse">
-            $WAVE
+            {" WAVES"}
           </h1>
           <p className="text-xl text-gray-300 mb-6">Earn $WAVE Rewards for Social Media Engagement</p>
           <div className="flex justify-center gap-4">
