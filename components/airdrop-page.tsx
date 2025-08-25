@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85";
+const CONTRACT_ADDRESS = "0x00000a1fF7eD21721dB7cb07efF523aBb2A00000";
 const LINEA_CHAIN_ID = "0xe708";
 const PAYMENT_RECIPIENT = "0x2e1a15553476e8f490b555675e2fbd9f5a06a174";
 const LINEASCAN_API = "https://api.lineascan.build/api";
