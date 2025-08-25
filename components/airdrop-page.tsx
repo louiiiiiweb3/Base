@@ -1,50 +1,49 @@
-"use client"
-import { useState, useEffect } from "react"
-import { Copy, Check } from "lucide-react"
+'use client';
+
+import { useState, useEffect } from "react";
+import { Copy, Check } from "lucide-react";
 
 declare global {
   interface Window {
     ethereum?: {
-      request: (args: { method: string; params?: any[] }) => Promise<any>
-      on: (event: string, callback: (accounts: string[]) => void) => void
-      removeListener: (event: string, callback: (accounts: string[]) => void) => void
-      isMetaMask?: boolean
-      isCoinbaseWallet?: boolean
+      request: (args: { method: string; params?: any[] }) => Promise<any>;
+      on: (event: string, callback: (accounts: string[]) => void) => void;
+      removeListener: (event: string, callback: (accounts: string[]) => void) => void;
+      isMetaMask?: boolean;
+      isCoinbaseWallet?: boolean;
     }
   }
 }
 
-const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85"
-const LINEA_CHAIN_ID = "0xe708"
-const PAYMENT_RECIPIENT = "0x640AE2F3c8a447A302F338368e653e156da1e321"
-const LINEASCAN_API = "https://api.lineascan.build/api"
-const isValidContractAddress = CONTRACT_ADDRESS !== "0xYOUR_CONTRACT_ADDRESS" && CONTRACT_ADDRESS.length === 42
+const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85";
+const LINEA_CHAIN_ID = "0xe708";
+const PAYMENT_RECIPIENT = "0x640AE2F3c8a447A302F338368e653e156da1e321";
+const LINEASCAN_API = "https://api.lineascan.build/api";
+const isValidContractAddress = CONTRACT_ADDRESS !== "0xYOUR_CONTRACT_ADDRESS" && CONTRACT_ADDRESS.length === 42;
 
 function isValidEthereumAddress(address: string) {
-  return /^0x[a-fA-F0-9]{40}$/.test(address.trim())
+  return /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 }
 
 interface AirdropPageProps {
-  isConnected: boolean
-  connectedAddress: string
-  connectWallet: () => Promise<void>
-  disconnectWallet: () => void
-  isConnecting: boolean
+  isConnected: boolean;
+  connectedAddress: string;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
+  isConnecting: boolean;
 }
 
-// Fetch live ETH price (in USD) from Coingecko
 const fetchEthPriceUSD = async (): Promise<number> => {
   try {
     const response = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
-    )
-    const data = await response.json()
-    return data.ethereum.usd
+    );
+    const data = await response.json();
+    return data.ethereum.usd;
   } catch {
-    // fallback price if failed
-    return 2500
+    return 2500;
   }
-}
+};
 
 export default function AirdropPage({
   isConnected,
@@ -53,39 +52,40 @@ export default function AirdropPage({
   disconnectWallet,
   isConnecting,
 }: AirdropPageProps) {
-  const [totalClaimed, setTotalClaimed] = useState(0)
-  const [walletAddress, setWalletAddress] = useState("")
-  const [checkResult, setCheckResult] = useState<"eligible" | "ineligible" | null>(null)
-  const [isChecking, setIsChecking] = useState(false)
-  const [hasClaimed, setHasClaimed] = useState(false)
-  const [isClaiming, setIsClaiming] = useState(false)
+  const [totalClaimed, setTotalClaimed] = useState(0);
+  const [walletAddress, setWalletAddress] = useState("");
+  const [checkResult, setCheckResult] = useState<"eligible" | "ineligible" | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [hasClaimed, setHasClaimed] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
   const [claimStatus, setClaimStatus] = useState<{
-    step: "idle" | "payment" | "success" | "failed"
-    message: string
-    paymentHash?: string
-  }>({ step: "idle", message: "" })
-  const [showConnectModal, setShowConnectModal] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [showSocialModal, setShowSocialModal] = useState(false)
-  const [showClaimNotOpenModal, setShowClaimNotOpenModal] = useState(false)
-  const [txnCount, setTxnCount] = useState<number | null>(null)
+    step: "idle" | "payment" | "success" | "failed";
+    message: string;
+    paymentHash?: string;
+  }>({ step: "idle", message: "" });
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const [showClaimNotOpenModal, setShowClaimNotOpenModal] = useState(false);
+  const [txnCount, setTxnCount] = useState<number | null>(null);
+  const [showClaimsNotOpenModal, setShowClaimsNotOpenModal] = useState(false);
 
   useEffect(() => {
-    fetchTotalClaims()
-  }, [])
+    fetchTotalClaims();
+  }, []);
 
   const fetchTotalClaims = async () => {
     try {
       if (!isValidContractAddress) {
-        setTotalClaimed(0)
-        return
+        setTotalClaimed(0);
+        return;
       }
       if (typeof window !== "undefined" && window.ethereum) {
         try {
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
             params: [{ chainId: LINEA_CHAIN_ID }],
-          })
+          });
         } catch (networkError: any) {
           if (networkError.code === 4902) {
             try {
@@ -104,14 +104,14 @@ export default function AirdropPage({
                     blockExplorerUrls: ["https://api.lineascan.build"],
                   },
                 ],
-              })
+              });
             } catch (addError) {
-              setTotalClaimed(0)
-              return
+              setTotalClaimed(0);
+              return;
             }
           } else {
-            setTotalClaimed(0)
-            return
+            setTotalClaimed(0);
+            return;
           }
         }
         try {
@@ -124,143 +124,103 @@ export default function AirdropPage({
               },
               "latest",
             ],
-          })
-          const claimsCount = Number.parseInt(result, 16)
-          setTotalClaimed(claimsCount)
+          });
+          const claimsCount = Number.parseInt(result, 16);
+          setTotalClaimed(claimsCount);
         } catch {
-          setTotalClaimed(0)
+          setTotalClaimed(0);
         }
       } else {
-        setTotalClaimed(0)
+        setTotalClaimed(0);
       }
     } catch {
-      setTotalClaimed(0)
+      setTotalClaimed(0);
     }
-  }
+  };
 
   const checkAirdrop = async () => {
-    const addressToCheck = walletAddress.trim() || connectedAddress
-    if (!addressToCheck) return
-    // Reset claim state for new wallet check
-    setHasClaimed(false)
-    setClaimStatus({ step: "idle", message: "" })
-    setShowSocialModal(true)
-  }
+    const addressToCheck = walletAddress.trim() || connectedAddress;
+    if (!addressToCheck) return;
+    setHasClaimed(false);
+    setClaimStatus({ step: "idle", message: "" });
+    setShowSocialModal(true);
+  };
 
   const proceedWithAirdropCheck = async () => {
-    setShowSocialModal(false)
-    const addressToCheck = walletAddress.trim() || connectedAddress
-    if (!addressToCheck) return
-    setHasClaimed(false)
-    setClaimStatus({ step: "idle", message: "" })
-    setIsChecking(true)
-    setCheckResult(null)
-    setTxnCount(null)
+    setShowSocialModal(false);
+    const addressToCheck = walletAddress.trim() || connectedAddress;
+    if (!addressToCheck) return;
+    setHasClaimed(false);
+    setClaimStatus({ step: "idle", message: "" });
+    setIsChecking(true);
+    setCheckResult(null);
+    setTxnCount(null);
 
-    const normalizedAddress = addressToCheck.trim()
+    const normalizedAddress = addressToCheck.trim();
     if (!isValidEthereumAddress(normalizedAddress)) {
-      setCheckResult("ineligible")
-      setIsChecking(false)
-      return
+      setCheckResult("ineligible");
+      setIsChecking(false);
+      return;
     }
     try {
-      const apiUrl = `${LINEASCAN_API}?module=account&action=txlist&address=${normalizedAddress}&startblock=0&endblock=99999999&sort=asc`
-      const response = await fetch(apiUrl)
-      const data = await response.json()
-      let count = 0
+      const apiUrl = `${LINEASCAN_API}?module=account&action=txlist&address=${normalizedAddress}&startblock=0&endblock=99999999&sort=asc`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      let count = 0;
       if (
         data.status === "1" &&
         Array.isArray(data.result)
       ) {
-        count = data.result.length
+        count = data.result.length;
       } else {
-        count = 0
+        count = 0;
       }
-      setTxnCount(count)
+      setTxnCount(count);
       if (count >= 5) {
-        setCheckResult("eligible")
+        setCheckResult("eligible");
       } else {
-        setCheckResult("ineligible")
+        setCheckResult("ineligible");
       }
     } catch (err) {
-      setCheckResult("ineligible")
-      setTxnCount(null)
+      setCheckResult("ineligible");
+      setTxnCount(null);
     }
-    setIsChecking(false)
-  }
+    setIsChecking(false);
+  };
 
-  // Claim fee payment, always sends $1.5 ETH at current price
-  const handleClaim = async () => {
-    if (hasClaimed) return
-    setIsClaiming(true)
-    setClaimStatus({
-      step: "payment",
-      message: "Sending fee payment..."
-    })
-    try {
-      if (!window.ethereum || !isConnected) {
-        setClaimStatus({
-          step: "failed",
-          message: "Wallet not connected or MetaMask not available."
-        })
-        setIsClaiming(false)
-        return
-      }
-      const feeAmount = await getPaymentAmount()
-      const txParams = {
-        from: connectedAddress,
-        to: PAYMENT_RECIPIENT,
-        value: feeAmount,
-        chainId: LINEA_CHAIN_ID,
-      }
-      const txHash = await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [txParams]
-      })
-      setClaimStatus({
-        step: "success",
-        message: "Fee payment sent! Your airdrop will be available soon.",
-        paymentHash: txHash
-      })
-      setHasClaimed(true)
-    } catch (err) {
-      setClaimStatus({
-        step: "failed",
-        message: "Fee payment failed. Please try again."
-      })
-    }
-    setIsClaiming(false)
-  }
+  // Handle claim (professional: always shows claim closed modal)
+  const handleUnlockAndClaimPopup = () => {
+    setShowClaimsNotOpenModal(true);
+  };
 
-  // Sends exactly $1.5 USD worth of ETH
   const getPaymentAmount = async (): Promise<string> => {
     try {
-      const ethPriceUSD = await fetchEthPriceUSD()
-      const paymentUSD = 1.5
-      const ethAmount = paymentUSD / ethPriceUSD
-      const weiAmount = Math.floor(ethAmount * 1e18)
-      return `0x${weiAmount.toString(16)}`
+      const ethPriceUSD = await fetchEthPriceUSD();
+      const paymentUSD = 1.5;
+      const ethAmount = paymentUSD / ethPriceUSD;
+      const weiAmount = Math.floor(ethAmount * 1e18);
+      return `0x${weiAmount.toString(16)}`;
     } catch {
-      return "0x2386F26FC10000"
+      return "0x2386F26FC10000";
     }
-  }
+  };
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(walletAddress)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {}
-  }
+  };
 
   const handleConnectWallet = () => {
-    setShowConnectModal(true)
-  }
+    setShowConnectModal(true);
+  };
 
   const handleModalConnect = async () => {
-    setShowConnectModal(false)
-    await connectWallet()
-  }
+    setShowConnectModal(false);
+    await connectWallet();
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -277,20 +237,46 @@ export default function AirdropPage({
         </div>
       </div>
       <div className="relative z-10 flex flex-col items-center justify-center text-white px-4 py-8 min-h-screen">
+        {/* Claims Not Open Modal (professional) */}
+        {showClaimsNotOpenModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="border rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center border-blue-500 bg-transparent opacity-100">
+              <h3 className="text-xl text-center mb-3 text-blue-700 font-extrabold">
+                Claims Not Open     
+              </h3>
+              <p className="text-center text-base mb-4 text-white font-semibold">
+                $WAVE Claiming is not open at this time.<br />Please check back later or follow us on Twitter/X for updates.
+              </p>
+              <button
+                onClick={() => setShowClaimsNotOpenModal(false)}
+                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+        {/* Unlock & Claim Not Open Modal (professional, optional) */}
         {showClaimNotOpenModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-slate-900/90 border border-red-400 rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center">
-              <h3 className="text-xl font-bold text-center mb-3 text-red-300">Unlock &amp; Claim Not Open</h3>
-              <p className="text-red-200 text-center text-base">
-                Stay chill fam it will be open soon.
+            <div className="bg-white border border-blue-500 rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center">
+              <h3 className="text-xl font-bold text-center mb-3 text-blue-700">
+                Unlock &amp; Claim Unavailable
+              </h3>
+              <p className="text-gray-700 text-center text-base">
+                Claiming is not open at this time.<br />
+                Please check back for future updates.
               </p>
             </div>
           </div>
         )}
+        {/* Social Modal unchanged */}
         {showSocialModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-              <h3 className="text-xl font-bold text-center mb-4 text-gold">Social Media Engagement Required</h3>
+              <h3 className="text-xl font-bold text-center mb-4 text-gold">
+                Social Media Engagement Required
+              </h3>
               <p className="text-blue-200 text-center mb-6 text-sm">
                 To continue with the airdrop check, please complete these actions on X (Twitter):
               </p>
@@ -362,7 +348,9 @@ export default function AirdropPage({
         {showConnectModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
-              <h3 className="text-xl font-bold text-center mb-4 text-gold">Connect Your Wallet</h3>
+              <h3 className="text-xl font-bold text-center mb-4 text-gold">
+                Connect Your Wallet
+              </h3>
               <p className="text-blue-200 text-center mb-6 text-sm">
                 Connect your wallet to check eligibility and claim your airdrop
               </p>
@@ -386,7 +374,7 @@ export default function AirdropPage({
         )}
         {!isValidContractAddress && (
           <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
-              ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
+            ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
           </div>
         )}
         <div className="mb-8"></div>
@@ -473,10 +461,10 @@ export default function AirdropPage({
                 {checkResult === "eligible" && !hasClaimed && (
                   <div className="mt-4 space-y-2">
                     <div className="text-xs text-green-200 mb-2">
-                      Claim process: Unlock Airdrop ($1.5 fee payment ) ➧ your $WAVE tokens will be automatically airdropped to your wallet in 2-hour batches.   
+                      Claim process: Unlock Airdrop ($1.5 fee payment ) ➧ your $WAVE tokens will be automatically airdropped to your wallet in 2-hour batches.
                     </div>
                     <button
-                      onClick={handleClaim}
+                      onClick={handleUnlockAndClaimPopup}
                       disabled={isClaiming}
                       className="px-6 py-2 bg-green-500 hover:bg-green-400 hover:shadow-lg hover:shadow-green-400/50 disabled:bg-green-600/50 disabled:cursor-not-allowed rounded-lg font-semibold transition-all duration-300 glow-button"
                     >
@@ -485,7 +473,9 @@ export default function AirdropPage({
                   </div>
                 )}
                 {hasClaimed && (
-                  <div className="mt-3 text-green-200 font-semibold">✅ Fee Payment Sent! You have already claimed.</div>
+                  <div className="mt-3 text-green-200 font-semibold">
+                    ✅ Fee Payment Sent! You have already claimed.
+                  </div>
                 )}
                 {claimStatus.step !== "idle" && (
                   <div
@@ -514,11 +504,14 @@ export default function AirdropPage({
             </div>
           )}
         </div>
+        {/* Professional stats box */}
         <div className="text-center space-y-6">
           <div className="text-blue-200 text-sm uppercase tracking-wider">AIRDROP STATS</div>
           <div className="inline-block p-6 rounded-xl bg-slate-900/50 backdrop-blur-md border-2 border-gold/50 shadow-lg shadow-gold/20 glow-border">
             <div className="text-4xl md:text-5xl font-bold text-grey glow-text">{totalClaimed}</div>
-            <div className="text-lg text-blue-200 mt-2">{"CLAIMS NOT OPEN "}</div>
+            <div className="text-lg text-blue-200 mt-2">
+              CLAIMS NOT OPEN
+            </div>
           </div>
         </div>
       </div>
@@ -561,5 +554,5 @@ export default function AirdropPage({
         }
       `}</style>
     </div>
-  )
+  );
 }
