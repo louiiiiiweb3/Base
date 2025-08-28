@@ -695,7 +695,7 @@ export default function WavePage({
           <div className="text-center space-y-8">
             <Card className="bg-black/20 backdrop-blur-sm border border-purple-500/30 max-w-2xl mx-auto">
               <CardHeader>
-                <CardTitle className="text-2xl text-white">Welcome to WAVE</CardTitle>
+                <CardTitle className="text-2xl text-white">Welcome to WAVES</CardTitle>
                 <CardDescription className="text-gray-400">
                   The revolutionary social reward platform that pays you for your social media engagement
                 </CardDescription>
