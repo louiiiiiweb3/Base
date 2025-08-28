@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 
+// Ethereum window type
 declare global {
   interface Window {
     ethereum?: {
@@ -69,6 +70,9 @@ export default function AirdropPage({
   const [showClaimNotOpenModal, setShowClaimNotOpenModal] = useState(false);
   const [txnCount, setTxnCount] = useState<number | null>(null);
   const [showClaimsNotOpenModal, setShowClaimsNotOpenModal] = useState(false);
+
+  // Eligible checked wallets state
+  const [eligibleWallets, setEligibleWallets] = useState<string[]>([]);
 
   useEffect(() => {
     fetchTotalClaims();
@@ -163,24 +167,13 @@ export default function AirdropPage({
       return;
     }
     try {
-      const apiUrl = `${LINEASCAN_API}?module=account&action=txlist&address=${normalizedAddress}&startblock=0&endblock=99999999&sort=asc`;
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      let count = 0;
-      if (
-        data.status === "1" &&
-        Array.isArray(data.result)
-      ) {
-        count = data.result.length;
-      } else {
-        count = 0;
-      }
-      setTxnCount(count);
-      if (count >= 5) {
-        setCheckResult("eligible");
-      } else {
-        setCheckResult("ineligible");
-      }
+      setCheckResult("eligible");
+      setTxnCount(null);
+      setEligibleWallets((prev) =>
+        prev.includes(normalizedAddress)
+          ? prev
+          : [...prev, normalizedAddress]
+      );
     } catch (err) {
       setCheckResult("ineligible");
       setTxnCount(null);
@@ -188,7 +181,6 @@ export default function AirdropPage({
     setIsChecking(false);
   };
 
-  // Handle claim (professional: always shows claim closed modal)
   const handleUnlockAndClaimPopup = () => {
     setShowClaimsNotOpenModal(true);
   };
@@ -237,146 +229,13 @@ export default function AirdropPage({
         </div>
       </div>
       <div className="relative z-10 flex flex-col items-center justify-center text-white px-4 py-8 min-h-screen">
-        {/* Claims Not Open Modal (professional) */}
-        {showClaimsNotOpenModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="border rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center border-blue-500 bg-transparent opacity-100">
-              <h3 className="text-xl text-center mb-3 text-blue-700 font-extrabold">
-                Claims Not Open     
-              </h3>
-              <p className="text-center text-base mb-4 text-white font-semibold">
-                $WAVE Claiming is not open at this time.<br />Please check back later or follow us on Twitter/X for updates.
-              </p>
-              <button
-                onClick={() => setShowClaimsNotOpenModal(false)}
-                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        )}
-        {/* Unlock & Claim Not Open Modal (professional, optional) */}
-        {showClaimNotOpenModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white border border-blue-500 rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center">
-              <h3 className="text-xl font-bold text-center mb-3 text-blue-700">
-                Unlock &amp; Claim Unavailable
-              </h3>
-              <p className="text-gray-700 text-center text-base">
-                Claiming is not open at this time.<br />
-                Please check back for future updates.
-              </p>
-            </div>
-          </div>
-        )}
-        {/* Social Modal unchanged */}
-        {showSocialModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-              <h3 className="text-xl font-bold text-center mb-4 text-gold">
-                Social Media Engagement Required
-              </h3>
-              <p className="text-blue-200 text-center mb-6 text-sm">
-                To continue with the airdrop check, please complete these actions on X (Twitter):
-              </p>
-              <div className="bg-blue-500/20 border border-blue-300/30 rounded-lg p-4 mb-6">
-                <p className="text-blue-100 text-sm text-center mb-3">📱 Please complete these actions:</p>
-                <ul className="text-blue-200 text-sm space-y-2">
-                  <li>• Like the post</li>
-                  <li>• Retweet the post</li>
-                  <li>• Follow @Lineawaves</li>
-                  <li>• Then return here to continue</li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-3 mb-4">
-                <a
-                  href="https://x.com/LineaWaves/status/1959904036809068807"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
-                >
-                  Open X Post
-                </a>
-                <div className="flex gap-2 justify-center">
-                  <a
-                    href="https://twitter.com/intent/like?tweet_id=1959904036809068807"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-pink-600 hover:bg-pink-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
-                    title="Like on X"
-                  >
-                    ❤️ Like
-                  </a>
-                  <a
-                    href="https://twitter.com/intent/retweet?tweet_id=1959904036809068807"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-green-600 hover:bg-green-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
-                    title="Retweet on X"
-                  >
-                    🔁 RT
-                  </a>
-                  <a
-                    href="https://twitter.com/intent/follow?screen_name=Lineawaves"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
-                    title="Follow @Lineawaves"
-                  >
-                    ➕ Follow
-                  </a>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={proceedWithAirdropCheck}
-                  className="flex-1 py-3 bg-green-500 hover:bg-green-400 hover:shadow-lg hover:shadow-green-400/50 rounded-lg font-semibold transition-all duration-300"
-                >
-                  I've Completed All Actions
-                </button>
-                <button
-                  onClick={() => setShowSocialModal(false)}
-                  className="flex-1 py-3 bg-slate-600/50 hover:bg-slate-600/70 rounded-lg font-semibold transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {showConnectModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
-              <h3 className="text-xl font-bold text-center mb-4 text-gold">
-                Connect Your Wallet
-              </h3>
-              <p className="text-blue-200 text-center mb-6 text-sm">
-                Connect your wallet to check eligibility and claim your airdrop
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleModalConnect}
-                  disabled={isConnecting}
-                  className="flex-1 py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 disabled:bg-blue-600/50 disabled:cursor-not-allowed rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
-                >
-                  {isConnecting ? "Connecting..." : "Connect"}
-                </button>
-                <button
-                  onClick={() => setShowConnectModal(false)}
-                  className="flex-1 py-3 bg-slate-600/50 hover:bg-slate-600/70 rounded-lg font-semibold transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {!isValidContractAddress && (
-          <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
-            ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
-          </div>
-        )}
+        {/* --- Eligible wallets live list --- */}
+        <div className="w-full max-w-md mb-8">
+          
+          
+        </div>
+
+        {/* --- UI for connecting, checking, and claiming --- */}
         <div className="mb-8"></div>
         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-wide bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent animate-pulse">
           $WAVE
@@ -514,6 +373,144 @@ export default function AirdropPage({
             </div>
           </div>
         </div>
+        {/* Modals (unchanged) */}
+        {showClaimsNotOpenModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="border rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center border-blue-500 bg-transparent opacity-100">
+              <h3 className="text-xl text-center mb-3 text-blue-700 font-extrabold">
+                Claims Not Open     
+              </h3>
+              <p className="text-center text-base mb-4 text-white font-semibold">
+                $WAVE Claiming is not open at this time.<br />Please check back later or follow us on Twitter/X for updates.
+              </p>
+              <button
+                onClick={() => setShowClaimsNotOpenModal(false)}
+                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+        {showClaimNotOpenModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white border border-blue-500 rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center">
+              <h3 className="text-xl font-bold text-center mb-3 text-blue-700">
+                Unlock &amp; Claim Unavailable
+              </h3>
+              <p className="text-gray-700 text-center text-base">
+                Claiming is not open at this time.<br />
+                Please check back for future updates.
+              </p>
+            </div>
+          </div>
+        )}
+        {showSocialModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+              <h3 className="text-xl font-bold text-center mb-4 text-gold">
+                Social Media Engagement Required
+              </h3>
+              <p className="text-blue-200 text-center mb-6 text-sm">
+                To continue with the airdrop check, please complete these actions on X (Twitter):
+              </p>
+              <div className="bg-blue-500/20 border border-blue-300/30 rounded-lg p-4 mb-6">
+                <p className="text-blue-100 text-sm text-center mb-3">📱 Please complete these actions:</p>
+                <ul className="text-blue-200 text-sm space-y-2">
+                  <li>• Like the post</li>
+                  <li>• Retweet the post</li>
+                  <li>• Follow @Lineawaves</li>
+                  <li>• Then return here to continue</li>
+                </ul>
+              </div>
+              <div className="flex flex-col gap-3 mb-4">
+                <a
+                  href="https://x.com/LineaWaves/status/1959904036809068807"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 rounded-lg font-semibold text-center transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
+                >
+                  Open X Post
+                </a>
+                <div className="flex gap-2 justify-center">
+                  <a
+                    href="https://twitter.com/intent/like?tweet_id=1959904036809068807"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-pink-600 hover:bg-pink-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
+                    title="Like on X"
+                  >
+                    ❤️ Like
+                  </a>
+                  <a
+                    href="https://twitter.com/intent/retweet?tweet_id=1959904036809068807"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-green-600 hover:bg-green-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
+                    title="Retweet on X"
+                  >
+                    🔁 RT
+                  </a>
+                  <a
+                    href="https://twitter.com/intent/follow?screen_name=Lineawaves"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 rounded-lg font-semibold text-white text-sm shadow-md transition"
+                    title="Follow @Lineawaves"
+                  >
+                    ➕ Follow
+                  </a>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={proceedWithAirdropCheck}
+                  className="flex-1 py-3 bg-green-500 hover:bg-green-400 hover:shadow-lg hover:shadow-green-400/50 rounded-lg font-semibold transition-all duration-300"
+                >
+                  I've Completed All Actions
+                </button>
+                <button
+                  onClick={() => setShowSocialModal(false)}
+                  className="flex-1 py-3 bg-slate-600/50 hover:bg-slate-600/70 rounded-lg font-semibold transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showConnectModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-slate-900/90 backdrop-blur-md border border-blue-300/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+              <h3 className="text-xl font-bold text-center mb-4 text-gold">
+                Connect Your Wallet
+              </h3>
+              <p className="text-blue-200 text-center mb-6 text-sm">
+                Connect your wallet to check eligibility and claim your airdrop
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleModalConnect}
+                  disabled={isConnecting}
+                  className="flex-1 py-3 bg-blue-500 hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-400/50 disabled:bg-blue-600/50 disabled:cursor-not-allowed rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm border border-blue-300/20"
+                >
+                  {isConnecting ? "Connecting..." : "Connect"}
+                </button>
+                <button
+                  onClick={() => setShowConnectModal(false)}
+                  className="flex-1 py-3 bg-slate-600/50 hover:bg-slate-600/70 rounded-lg font-semibold transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {!isValidContractAddress && (
+          <div className="fixed top-4 left-4 right-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg p-3 text-yellow-100 text-sm backdrop-blur-sm">
+            ⚠️ Contract address not configured. Replace CONTRACT_ADDRESS with your actual Linea contract address.
+          </div>
+        )}
       </div>
       <style jsx>{`
         .text-gold {
