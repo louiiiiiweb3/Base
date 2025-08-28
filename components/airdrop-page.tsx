@@ -87,7 +87,7 @@ export default function AirdropPage({
       if (!res.ok) throw new Error("Network error");
       const data = await res.json();
       if (!data.result || !Array.isArray(data.result)) {
-        setTotalClaimed(19);
+        setTotalClaimed(21);
         return;
       }
       // Only successful, fee-paid txs sent to PAYMENT_RECIPIENT
@@ -96,11 +96,11 @@ export default function AirdropPage({
           && tx.isError === "0"
           && Number(tx.gasUsed) > 0
       );
-      const userPrepaidCount = 19;
+      const userPrepaidCount = 21;
       const claimsCount = userPrepaidCount + claimsArr.length;
       setTotalClaimed(claimsCount);
     } catch {
-      setTotalClaimed(19);
+      setTotalClaimed(21);
     }
   };
 
